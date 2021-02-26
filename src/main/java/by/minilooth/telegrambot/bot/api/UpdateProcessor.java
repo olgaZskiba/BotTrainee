@@ -4,7 +4,7 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 
 public interface UpdateProcessor {
     
-    public <E extends Throwable> void processInput(Update update) throws E;
+    public <E extends Throwable> void processText(Update update) throws E;
     public <E extends Throwable> void processContact(Update update) throws E;
     public <E extends Throwable> void processPhoto(Update update) throws E;
     public <E extends Throwable> void processCallbackQuery(Update update) throws E;

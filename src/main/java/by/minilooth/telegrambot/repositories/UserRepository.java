@@ -9,5 +9,5 @@ import by.minilooth.telegrambot.model.User;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, Integer> {
-    public Optional<User> findByTelegramId(Long telegramId);
+    public Optional<User> findByTelegramId(String telegramId);
 }

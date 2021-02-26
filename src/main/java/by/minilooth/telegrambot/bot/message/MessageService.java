@@ -14,7 +14,6 @@ public class MessageService {
 
     protected void updateLastBotMessage(User user, Message message) {
         user.setLastBotMessageId(message.getMessageId());
-        user.setLastBotMessageHasReplyMarkup(message.hasReplyMarkup());
         userService.save(user);
     }
 

@@ -11,7 +11,7 @@ public enum ClientBotState implements BotState<ClientBotState, ClientBotContext>
             throw new ClientBotStateException("adasd", this);
         }
 
-        @Override public void handleInput(ClientBotContext botContext) {
+        @Override public void handleText(ClientBotContext botContext) {
 
         }
 
@@ -32,7 +32,7 @@ public enum ClientBotState implements BotState<ClientBotState, ClientBotContext>
 
         }
 
-        @Override public void handleInput(ClientBotContext botContext) throws ClientBotStateException {
+        @Override public void handleText(ClientBotContext botContext) throws ClientBotStateException {
             throw new ClientBotStateException("adasd", this);
         }
 
@@ -52,7 +52,7 @@ public enum ClientBotState implements BotState<ClientBotState, ClientBotContext>
 
         }
 
-        @Override public void handleInput(ClientBotContext botContext) {
+        @Override public void handleText(ClientBotContext botContext) {
 
         }
 
@@ -72,7 +72,7 @@ public enum ClientBotState implements BotState<ClientBotState, ClientBotContext>
 
         }
 
-        @Override public void handleInput(ClientBotContext botContext) {
+        @Override public void handleText(ClientBotContext botContext) {
 
         }
 
@@ -92,7 +92,7 @@ public enum ClientBotState implements BotState<ClientBotState, ClientBotContext>
 
         }
 
-        @Override public void handleInput(ClientBotContext botContext) {
+        @Override public void handleText(ClientBotContext botContext) {
 
         }
 
@@ -120,7 +120,7 @@ public enum ClientBotState implements BotState<ClientBotState, ClientBotContext>
     }
 
     @Override 
-    public void handleInput(ClientBotContext clientBotContext) throws ClientBotStateException {}
+    public void handleText(ClientBotContext clientBotContext) throws ClientBotStateException {}
     
     @Override 
     public void handleCallbackQuery(ClientBotContext clientBotContext) throws ClientBotStateException {}

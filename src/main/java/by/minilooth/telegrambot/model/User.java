@@ -54,10 +54,6 @@ public class User {
     @Builder.Default
     private Integer lastBotMessageId = 0;
 
-    @Column(name = "last_bot_message_has_reply_markup", nullable = false, columnDefinition = "TINYINT(0) DEFAULT 0")
-    @Builder.Default
-    private Boolean lastBotMessageHasReplyMarkup = true;
-
     @EqualsAndHashCode.Exclude
     @ToString.Exclude
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)

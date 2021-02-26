@@ -45,12 +45,12 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
     }
 
-    private Long getTelegramId(Update update) {
+    private String getTelegramId(Update update) {
         if (update.hasMessage()) {
-            return update.getMessage().getFrom().getId().longValue();
+            return update.getMessage().getChatId().toString();
         }
         else if (update.hasCallbackQuery()) {
-            return update.getCallbackQuery().getFrom().getId().longValue();
+            return update.getCallbackQuery().getFrom().getId().toString();
         }
         return null;
     }

@@ -32,8 +32,8 @@ public class ClientUpdateHandler extends UpdateHandler {
     }
 
     @Override
-    public void processInput(Update update) throws ClientBotStateException, UserNotFoundException {
-        final Long chatId = update.getMessage().getChatId();
+    public void processText(Update update) throws ClientBotStateException, UserNotFoundException {
+        final String chatId = update.getMessage().getChatId().toString();
         ClientBotContext botContext = null;
         ClientBotState botState = null;
 
@@ -63,9 +63,9 @@ public class ClientUpdateHandler extends UpdateHandler {
                 botContext = ClientBotContext.of(client, update);
                 botState = client.getClientBotState();
 
-                LOGGER.info("Update received from client: " + chatId + ", in state: " + botState + ", with text: " + update.getMessage().getText());
+                LOGGER.info("[{0} | {1}] Text: {2}", chatId, botState, update.getMessage().getText());
 
-                botState.handleInput(botContext);
+                botState.handleText(botContext);
 
                 do {
                     if (botState.nextState() != null) {
