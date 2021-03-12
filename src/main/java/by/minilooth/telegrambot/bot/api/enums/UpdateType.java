@@ -1,7 +1,6 @@
 package by.minilooth.telegrambot.bot.api.enums;
 
 public enum UpdateType {
-    
     CALLBACK_QUERY,
     TEXT,
     AUDIO,

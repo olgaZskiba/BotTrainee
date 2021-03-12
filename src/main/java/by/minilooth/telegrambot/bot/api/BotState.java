@@ -1,5 +1,7 @@
 package by.minilooth.telegrambot.bot.api;
 
+import by.minilooth.telegrambot.exception.ClientNotFoundException;
+
 public interface BotState<E extends Enum<E>, T> {
     
     public <X extends Throwable> void handleText(T botContext) throws X;
@@ -11,7 +13,7 @@ public interface BotState<E extends Enum<E>, T> {
     public <X extends Throwable> void handleVideoNote(T botContext) throws X;
     public <X extends Throwable> void handleDocument(T botContext) throws X;
 
-    public abstract <X extends Throwable> void enter(T botState) throws X;
+    public abstract <X extends Throwable> void enter(T botState) throws X, ClientNotFoundException;
     public abstract E nextState();
     public abstract E rootState();
 

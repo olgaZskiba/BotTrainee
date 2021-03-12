@@ -1,5 +1,6 @@
 package by.minilooth.telegrambot.bot.message.client;
 
+import lombok.SneakyThrows;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,18 +28,23 @@ public class ClientMessageService extends MessageService {
     @Autowired private ClientMessageSource clientMessageSource;
     @Autowired private ClientReplyKeyboardMarkupSource clientReplyKeyboardMarkupSource;
 
+    @SneakyThrows
+    private Boolean checkCallbackQuery(ClientBotContext clientBotContext) {
+        return botUtils.getUpdateType(clientBotContext.getUpdate()).equals(UpdateType.CALLBACK_QUERY) &&
+                !clientBotContext.getUpdate().getMessage().getReplyMarkup().equals(new InlineKeyboardMarkup());
+
+    }
+
     public void sendStartMessage(ClientBotContext clientBotContext) throws ClientNotFoundException {
         Client client = clientBotContext.getClient();
 
         if (client == null) throw new ClientNotFoundException();
 
-        if (botUtils.getUpdateType(clientBotContext.getUpdate()).equals(UpdateType.CALLBACK_QUERY) &&
-            !clientBotContext.getUpdate().getMessage().getReplyMarkup().equals(new InlineKeyboardMarkup())) {
+        if (checkCallbackQuery(clientBotContext)) {
 
-        }
-        else {
+        } else {
             try {
-                Message message = messageSender.sendMessage(client.getTelegramId(), clientMessageSource.getMessage("message"), null); 
+                Message message = messageSender.sendMessage(client.getTelegramId(), clientMessageSource.getMessage("message.start"), null);
 
                 updateLastBotMessage(client.getUser(), message);
             }
