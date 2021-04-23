@@ -3,6 +3,7 @@ package by.integrator.telegrambot.bot.api.client.states;
 import javax.annotation.PostConstruct;
 
 import by.integrator.telegrambot.bot.api.MessageSender;
+import by.integrator.telegrambot.bot.api.admin.service.AdminMessageService;
 import by.integrator.telegrambot.bot.api.client.service.ClientMessageService;
 import by.integrator.telegrambot.service.ClientService;
 import by.integrator.telegrambot.service.MessengerService;
@@ -18,6 +19,7 @@ public class ClientBotStateInjector implements BotStateInjector<ClientBotState, 
     @Autowired private ClientService clientService;
     @Autowired private MessageSender messageSender;
     @Autowired private MessengerService messengerService;
+    @Autowired private AdminMessageService adminMessageService;
 
     @PostConstruct
     @Override
@@ -26,6 +28,7 @@ public class ClientBotStateInjector implements BotStateInjector<ClientBotState, 
         ClientBotState.setClientService(clientService);
         ClientBotState.setMessageSender(messageSender);
         ClientBotState.setMessengerService(messengerService);
+        ClientBotState.setAdminMessageService(adminMessageService);
     }
 
 }

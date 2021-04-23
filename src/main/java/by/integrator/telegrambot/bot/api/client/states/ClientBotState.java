@@ -2,6 +2,7 @@ package by.integrator.telegrambot.bot.api.client.states;
 
 import by.integrator.telegrambot.bot.api.BotState;
 import by.integrator.telegrambot.bot.api.MessageSender;
+import by.integrator.telegrambot.bot.api.admin.service.AdminMessageService;
 import by.integrator.telegrambot.bot.api.client.keyboard.reply.ClientReplyKeyboardMarkupSource;
 import by.integrator.telegrambot.bot.api.client.service.ClientMessageService;
 import by.integrator.telegrambot.exception.ClientBotStateException;
@@ -568,6 +569,10 @@ public enum ClientBotState implements BotState<ClientBotState, ClientBotContext>
         @Override
         public void enter(ClientBotContext botContext) {
             clientMessageService.sendFinishFilledProfileMessage(botContext);
+            Client client = botContext.getClient();
+            client.setProfileFilled(true);
+            clientService.save(client);
+            adminMessageService.sendNotificationAboutNewClient(botContext);
         }
 
         @Override
@@ -672,6 +677,8 @@ public enum ClientBotState implements BotState<ClientBotState, ClientBotContext>
 
     @Setter
     private static ClientMessageService clientMessageService;
+    @Setter
+    private static AdminMessageService adminMessageService;
 
     @Setter
     private static ClientService clientService;

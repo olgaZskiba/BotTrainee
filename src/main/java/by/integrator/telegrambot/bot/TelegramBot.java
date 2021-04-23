@@ -1,5 +1,6 @@
 package by.integrator.telegrambot.bot;
 
+import by.integrator.telegrambot.bot.api.admin.handler.AdminUpdateHandler;
 import by.integrator.telegrambot.bot.api.client.handler.ClientUpdateHandler;
 import by.integrator.telegrambot.model.User;
 import by.integrator.telegrambot.model.enums.Role;
@@ -31,6 +32,8 @@ public class TelegramBot extends TelegramLongPollingBot {
     private UserService userService;
     @Autowired
     private ClientUpdateHandler clientUpdateHandler;
+    @Autowired
+    private AdminUpdateHandler adminUpdateHandler;
 
     @Override
     public void onUpdateReceived(Update update) {
@@ -57,6 +60,9 @@ public class TelegramBot extends TelegramLongPollingBot {
             switch (user.getRole()) {
                 case CLIENT:
                     clientUpdateHandler.handle(update);
+                    break;
+                case ADMIN:
+                    adminUpdateHandler.handle(update);
                     break;
                 default:
                     break;

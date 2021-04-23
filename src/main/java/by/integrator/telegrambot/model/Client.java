@@ -43,6 +43,9 @@ public class Client {
     @Column(name = "phoneNumber")
     private String phoneNumber;
 
+    @Column(name = "profileFilled", columnDefinition = "TINYINT(0)")
+    private Boolean profileFilled;
+
     @EqualsAndHashCode.Exclude
     @ToString.Exclude
     @OneToOne(mappedBy = "client", cascade = CascadeType.ALL)
