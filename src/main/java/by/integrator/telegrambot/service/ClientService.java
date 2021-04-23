@@ -14,9 +14,11 @@ import by.integrator.telegrambot.repositories.ClientRepository;
 
 @Service
 public class ClientService {
-    
-    @Autowired private ClientRepository clientRepository;
-    @Autowired private MessengerService messengerService;
+
+    @Autowired
+    private ClientRepository clientRepository;
+    @Autowired
+    private MessengerService messengerService;
 
     @Transactional
     public void save(Client client) {
@@ -35,9 +37,10 @@ public class ClientService {
 
     public Client createClient(User user) {
         Client client = Client.builder()
-                              .clientBotState(ClientBotState.getInitialState())
-                              .user(user)
-                              .build();
+                .clientBotState(ClientBotState.getInitialState())
+                .user(user)
+                .profileFilled(false)
+                .build();
 
         user.setClient(client);
 
@@ -46,6 +49,16 @@ public class ClientService {
 
     public Boolean isHaveMessenger(Client client, Messenger messenger) {
         return messengerService.getAllByClient(client).contains(messenger);
+    }
+
+    @Transactional
+    public List<Client> getByProfileFilledFalse() {
+        return clientRepository.findAllByProfileFilledFalse();
+    }
+
+    @Transactional
+    public List<Client> getByProfileFilledTrue() {
+        return clientRepository.findAllByProfileFilledTrue();
     }
 
 }

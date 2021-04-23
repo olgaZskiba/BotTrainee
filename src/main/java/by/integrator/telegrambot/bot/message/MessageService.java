@@ -9,7 +9,7 @@ import by.integrator.telegrambot.service.UserService;
 
 @Service
 public class MessageService {
-
+    public final static String DEFAULT_PARSE_MODE = "HTML";
     @Autowired
     private UserService userService;
 
