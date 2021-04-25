@@ -153,11 +153,11 @@ public class MessageSender {
         return this.deleteMessage(deleteMessage);
     }
 
-    private Message sendMessage(SendMessage sendMessage) throws TelegramApiException {
+    public Message sendMessage(SendMessage sendMessage) throws TelegramApiException {
         return telegramBot.execute(sendMessage);
     }
 
-    private Message sendPhoto(SendPhoto sendPhoto) throws TelegramApiException {
+    public Message sendPhoto(SendPhoto sendPhoto) throws TelegramApiException {
         return telegramBot.execute(sendPhoto);
     }
 

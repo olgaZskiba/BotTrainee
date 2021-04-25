@@ -7,6 +7,7 @@ import by.integrator.telegrambot.bot.api.admin.service.AdminMessageService;
 import by.integrator.telegrambot.bot.api.client.service.ClientMessageService;
 import by.integrator.telegrambot.service.ClientService;
 import by.integrator.telegrambot.service.MessengerService;
+import by.integrator.telegrambot.service.QuestionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -20,6 +21,7 @@ public class ClientBotStateInjector implements BotStateInjector<ClientBotState, 
     @Autowired private MessageSender messageSender;
     @Autowired private MessengerService messengerService;
     @Autowired private AdminMessageService adminMessageService;
+    @Autowired private QuestionService questionService;
 
     @PostConstruct
     @Override
@@ -29,6 +31,7 @@ public class ClientBotStateInjector implements BotStateInjector<ClientBotState, 
         ClientBotState.setMessageSender(messageSender);
         ClientBotState.setMessengerService(messengerService);
         ClientBotState.setAdminMessageService(adminMessageService);
+        ClientBotState.setQuestionService(questionService);
     }
 
 }

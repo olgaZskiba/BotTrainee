@@ -38,8 +38,12 @@ public class ClientService {
     public Client createClient(User user) {
         Client client = Client.builder()
                 .clientBotState(ClientBotState.getInitialState())
+                .firstName(user.getFirstname())
+                .lastName(user.getLastname())
                 .user(user)
                 .profileFilled(false)
+                .processed(false)
+                .day(1)
                 .build();
 
         user.setClient(client);
@@ -61,4 +65,16 @@ public class ClientService {
         return clientRepository.findAllByProfileFilledTrue();
     }
 
+    public Integer countAllClients() {
+        return clientRepository.findAll().size();
+    }
+
+    public Client getById(long parseInt) {
+        return clientRepository.findById(parseInt).orElse(null);
+    }
+
+    public void removeCurrents(Client client) {
+        client.setQuestions(null);
+        save(client);
+    }
 }

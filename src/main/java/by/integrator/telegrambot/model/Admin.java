@@ -25,6 +25,18 @@ public class Admin {
     @Column(name = "lastName")
     private String lastName;
 
+    @EqualsAndHashCode.Exclude
+    @ToString.Exclude
+    @ManyToOne
+    @JoinColumn(name = "CurrentClientId")
+    private Client currentClient;
+
+    @EqualsAndHashCode.Exclude
+    @ToString.Exclude
+    @ManyToOne
+    @JoinColumn(name = "CurrentQuestionId")
+    private Question currentQuestion;
+
     @Column(name = "admin_bot_state", nullable = false)
     @Enumerated(EnumType.ORDINAL)
     private AdminBotState adminBotState;

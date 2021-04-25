@@ -1,9 +1,13 @@
 package by.integrator.telegrambot.bot.api.admin.keyboard.inline;
 
 import by.integrator.telegrambot.bot.keyboard.InlineKeyboardMarkupSource;
+import by.integrator.telegrambot.model.Client;
 import by.integrator.telegrambot.model.Messenger;
+import by.integrator.telegrambot.model.PostponeMessage;
+import by.integrator.telegrambot.model.Question;
 import com.vdurmont.emoji.EmojiParser;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboard;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 
 import java.util.ArrayList;
@@ -12,29 +16,24 @@ import java.util.List;
 
 public class AdminInlineKeyboardMarkupSource extends InlineKeyboardMarkupSource {
 
-    public InlineKeyboardMarkup getListBotTypes(Collection<Messenger> selectedMessengers, List<Messenger> messenger) {
+    public InlineKeyboardMarkup generateClientsMultiplySelectablePageableInlineMarkup(List<Client> clients, Integer page) {
         InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> keyboardRows = new ArrayList<>();
 
-        for (int i = 0; i < messenger.size(); i++) {
+        for (int i = ((page - 1) * ITEMS_PER_PAGE); i < page * ITEMS_PER_PAGE && i < clients.size(); i++) {
             List<InlineKeyboardButton> buttons = new ArrayList<>();
             InlineKeyboardButton button = new InlineKeyboardButton();
 
-            if (selectedMessengers.contains(messenger.get(i))) {
-                button.setText(messenger.get(i).getName() + EmojiParser.parseToUnicode(" " + SELECTED_EMOJI));
-                button.setCallbackData(messenger.get(i).getId().toString());
-            } else {
-                button.setText(messenger.get(i).getName());
-                button.setCallbackData(messenger.get(i).getId().toString());
-            }
+            button.setText(clients.get(i).getLastName() + " " + clients.get(i).getFirstName());
+            button.setCallbackData(clients.get(i).getId().toString());
 
             buttons.add(button);
 
             keyboardRows.add(buttons);
         }
 
-        if (!selectedMessengers.isEmpty()) {
-            keyboardRows.add(getContinueInlineButton());
+        if (clients.size() > ITEMS_PER_PAGE) {
+            keyboardRows.add(getNavigateInlineButtons(clients, page));
         }
 
         inlineKeyboardMarkup.setKeyboard(keyboardRows);
@@ -42,21 +41,17 @@ public class AdminInlineKeyboardMarkupSource extends InlineKeyboardMarkupSource 
         return inlineKeyboardMarkup;
     }
 
-    public InlineKeyboardMarkup getConfirmInlineKeyboard() {
+    public InlineKeyboardMarkup getProcessedInlineButton() {
         InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> keyboardRows = new ArrayList<>();
 
         List<InlineKeyboardButton> buttons = new ArrayList<>();
-        InlineKeyboardButton buttonYes = new InlineKeyboardButton();
-        buttonYes.setText("Всё верно");
-        buttonYes.setCallbackData("callback.yes");
+        InlineKeyboardButton button = new InlineKeyboardButton();
 
-        InlineKeyboardButton buttonNo = new InlineKeyboardButton();
-        buttonNo.setText("Исправить");
-        buttonNo.setCallbackData("callback.no");
+        button.setText("Обработан");
+        button.setCallbackData(CALLBACK_PREFIX + PROCESSED);
 
-        buttons.add(buttonYes);
-        buttons.add(buttonNo);
+        buttons.add(button);
 
         keyboardRows.add(buttons);
 
@@ -65,33 +60,56 @@ public class AdminInlineKeyboardMarkupSource extends InlineKeyboardMarkupSource 
         return inlineKeyboardMarkup;
     }
 
-    public InlineKeyboardMarkup getClientFieldsInlineKeyboard() {
+    public InlineKeyboardMarkup getAnswerTheQuestionInlineButton(Client client, Question question) {
         InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> keyboardRows = new ArrayList<>();
 
         List<InlineKeyboardButton> buttons = new ArrayList<>();
-        InlineKeyboardButton buttonLastName = new InlineKeyboardButton();
-        buttonLastName.setText("1 - Фамилия");
-        buttonLastName.setCallbackData("callback.lastName");
+        InlineKeyboardButton button = new InlineKeyboardButton();
 
-        InlineKeyboardButton buttonFirstName = new InlineKeyboardButton();
-        buttonFirstName.setText("2 - Имя");
-        buttonFirstName.setCallbackData("callback.firstName");
+        button.setText("Ответить");
+        button.setCallbackData(CALLBACK_PREFIX + ANSWER + "." + client.getId() + "." + question.getId());
 
-        InlineKeyboardButton buttonEmail = new InlineKeyboardButton();
-        buttonEmail.setText("3 - Email");
-        buttonEmail.setCallbackData("callback.email");
-
-        InlineKeyboardButton buttonMessenger = new InlineKeyboardButton();
-        buttonMessenger.setText("4 - Мессенджер");
-        buttonMessenger.setCallbackData("callback.messenger");
-
-        buttons.add(buttonLastName);
-        buttons.add(buttonFirstName);
-        buttons.add(buttonEmail);
-        buttons.add(buttonMessenger);
+        buttons.add(button);
 
         keyboardRows.add(buttons);
+
+        inlineKeyboardMarkup.setKeyboard(keyboardRows);
+
+        return inlineKeyboardMarkup;
+    }
+
+    public InlineKeyboardMarkup getListButtonsPostponeMessage(PostponeMessage postponeMessage) {
+        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> keyboardRows = new ArrayList<>();
+
+        InlineKeyboardButton buttonCancelLoadPicture = new InlineKeyboardButton();
+        buttonCancelLoadPicture.setText("Удалить");
+        buttonCancelLoadPicture.setCallbackData(postponeMessage.getId().toString());
+
+        List<InlineKeyboardButton> firstKeyboardButtonRow = new ArrayList<>();
+        firstKeyboardButtonRow.add(buttonCancelLoadPicture);
+        keyboardRows.add(firstKeyboardButtonRow);
+
+        inlineKeyboardMarkup.setKeyboard(keyboardRows);
+
+        return inlineKeyboardMarkup;
+    }
+
+    public InlineKeyboardMarkup getButtonsCancelLoadPicture() {
+        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
+
+        InlineKeyboardButton buttonCancelLoadPicture = new InlineKeyboardButton();
+        buttonCancelLoadPicture.setText("Без изображения");
+
+        buttonCancelLoadPicture.setCallbackData("buttonCancelLoadPicture");
+
+        List<InlineKeyboardButton> firstKeyboardButtonRow = new ArrayList<>();
+        firstKeyboardButtonRow.add(buttonCancelLoadPicture);
+
+        List<List<InlineKeyboardButton>> keyboardRows = new ArrayList<>();
+
+        keyboardRows.add(firstKeyboardButtonRow);
 
         inlineKeyboardMarkup.setKeyboard(keyboardRows);
 

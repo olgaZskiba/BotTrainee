@@ -59,6 +59,9 @@ public class User {
     @Column(name = "BotLastMessageEditable", columnDefinition = "TINYINT(1)")
     private Boolean botLastMessageEditable;
 
+    @Column(name = "CurrentPage", nullable = false)
+    private Integer currentPage;
+
     @EqualsAndHashCode.Exclude
     @ToString.Exclude
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)

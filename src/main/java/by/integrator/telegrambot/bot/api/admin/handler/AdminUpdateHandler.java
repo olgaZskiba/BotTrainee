@@ -19,14 +19,16 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 
 @Component
 public class AdminUpdateHandler extends UpdateHandler {
-    
+
     private final static Logger LOGGER = LoggerFactory.getLogger(AdminUpdateHandler.class);
 
-    @Autowired private UserService userService;
-    @Autowired private AdminService adminService;
+    @Autowired
+    private UserService userService;
+    @Autowired
+    private AdminService adminService;
 
     private void updateState(User user, AdminBotState adminBotState) {
-        if (user != null && user.getClient() != null && adminBotState != null) {
+        if (user != null && user.getAdmin() != null && adminBotState != null) {
             user.getAdmin().setAdminBotState(adminBotState);
             userService.save(user);
         }
@@ -49,22 +51,20 @@ public class AdminUpdateHandler extends UpdateHandler {
                 botState = admin.getAdminBotState();
 
                 botState.enter(botContext);
-                
-                while(!botState.getIsInputNeeded()) {
+
+                while (!botState.getIsInputNeeded()) {
                     if (botState.nextState() != null) {
                         botState = botState.nextState();
                         botState.enter(botContext);
-                    }
-                    else {
+                    } else {
                         break;
                     }
                 }
-            }
-            else {
+            } else {
                 botContext = AdminBotContext.of(admin, update);
                 botState = admin.getAdminBotState();
 
-                LOGGER.info("[{0} | {1}] Text: {2}", chatId, botState, update.getMessage().getText());
+                LOGGER.info("[" + chatId + " | " + botState + "] Text: ", update.getMessage().getText());
 
                 botState.handleText(botContext);
 
@@ -72,18 +72,15 @@ public class AdminUpdateHandler extends UpdateHandler {
                     if (botState.nextState() != null) {
                         botState = botState.nextState();
                         botState.enter(botContext);
-                    }
-                    else {
+                    } else {
                         break;
                     }
                 } while (!botState.getIsInputNeeded());
             }
-        }
-        catch (AdminBotStateException ex) {
+        } catch (AdminBotStateException ex) {
             botState = ((AdminBotStateException) ex).getExceptionState().rootState();
             botState.enter(botContext);
-        }
-        finally {
+        } finally {
             updateState(user, botState);
         }
     }
@@ -101,7 +98,7 @@ public class AdminUpdateHandler extends UpdateHandler {
 
     @Override
     public void processCallbackQuery(Update update) throws AdminBotStateException {
-        final String chatId = update.getMessage().getChatId().toString();
+        final String chatId = update.getCallbackQuery().getFrom().getId().toString();
         AdminBotContext botContext = null;
         AdminBotState botState = null;
 
@@ -117,21 +114,19 @@ public class AdminUpdateHandler extends UpdateHandler {
 
                 botState.enter(botContext);
 
-                while(!botState.getIsInputNeeded()) {
+                while (!botState.getIsInputNeeded()) {
                     if (botState.nextState() != null) {
                         botState = botState.nextState();
                         botState.enter(botContext);
-                    }
-                    else {
+                    } else {
                         break;
                     }
                 }
-            }
-            else {
+            } else {
                 botContext = AdminBotContext.of(admin, update);
                 botState = admin.getAdminBotState();
 
-                LOGGER.info("[{0} | {1}] Text: {2}", chatId, botState, update.getMessage().getText());
+                LOGGER.info("[" + chatId + " | " + botState + "] callback data: " + update.getCallbackQuery().getData());
 
                 botState.handleCallbackQuery(botContext);
 
@@ -139,18 +134,15 @@ public class AdminUpdateHandler extends UpdateHandler {
                     if (botState.nextState() != null) {
                         botState = botState.nextState();
                         botState.enter(botContext);
-                    }
-                    else {
+                    } else {
                         break;
                     }
                 } while (!botState.getIsInputNeeded());
             }
-        }
-        catch (AdminBotStateException ex) {
+        } catch (AdminBotStateException ex) {
             botState = ((AdminBotStateException) ex).getExceptionState().rootState();
             botState.enter(botContext);
-        }
-        finally {
+        } finally {
             updateState(user, botState);
         }
 
@@ -180,5 +172,5 @@ public class AdminUpdateHandler extends UpdateHandler {
 
     }
 
-    
+
 }

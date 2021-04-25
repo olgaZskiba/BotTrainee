@@ -8,12 +8,13 @@ import by.integrator.telegrambot.bot.api.client.service.ClientMessageService;
 import by.integrator.telegrambot.exception.ClientBotStateException;
 import by.integrator.telegrambot.model.Client;
 import by.integrator.telegrambot.model.Messenger;
-import by.integrator.telegrambot.model.enums.BotType;
+import by.integrator.telegrambot.model.Question;
 import by.integrator.telegrambot.service.ClientService;
 import by.integrator.telegrambot.service.MessengerService;
-import by.integrator.telegrambot.util.Utils;
+import by.integrator.telegrambot.service.QuestionService;
 import by.integrator.telegrambot.validation.ValidationResult;
 import by.integrator.telegrambot.validation.Validator;
+import com.vdurmont.emoji.EmojiParser;
 import lombok.Setter;
 import lombok.SneakyThrows;
 
@@ -96,7 +97,7 @@ public enum ClientBotState implements BotState<ClientBotState, ClientBotContext>
                     break;
                 case ClientReplyKeyboardMarkupSource
                         .ASK_QUESTION:
-                    nextState = AskQuestion;
+                    nextState = StartAskQuestion;
                     break;
                 case ClientReplyKeyboardMarkupSource
                         .WEBSITE:
@@ -606,13 +607,108 @@ public enum ClientBotState implements BotState<ClientBotState, ClientBotContext>
         }
     },
 
-    AskQuestion(true) {
+    StartAskQuestion(true) {
         private ClientBotState nextState = null;
 
         @SneakyThrows
         @Override
         public void enter(ClientBotContext botContext) {
             clientMessageService.sendAskQuestionMessage(botContext);
+        }
+
+        @Override
+        public ClientBotState nextState() {
+            return AskQuestion;
+        }
+
+        @Override
+        public ClientBotState rootState() {
+            return MainMenu;
+        }
+    },
+
+    AskQuestion(true) {
+        private ClientBotState nextState = null;
+
+        @SneakyThrows
+        @Override
+        public void enter(ClientBotContext botContext) {
+        }
+
+        @Override
+        public void handleText(ClientBotContext botContext) {
+            try {
+                switch (EmojiParser.removeAllEmojis(botContext.getUpdate().getMessage().getText())) {
+                    case "Отправить":
+                        nextState = SaveSendingQuestion;
+                        break;
+                    case "Отмена":
+                        nextState = CancelSendingQuestion;
+                        break;
+                    default:
+                        String text = botContext.getUpdate().getMessage().getText();
+                        Client client = botContext.getClient();
+                        if (questionService.getByClientAndIsSent(client, false) == null) {
+                            questionService.createQuestion(client, text);
+                        } else {
+                            questionService.saveQuestionText(botContext.getClient(), text);
+                        }
+                        nextState = AskQuestion;
+                        break;
+                }
+            } catch (Exception ex) {
+                clientMessageService.sendSomethingWentWrongMessage(botContext);
+//                clientService.removeCurrents(botContext.getClient());
+                nextState = AskQuestion;
+            }
+        }
+
+        @Override
+        public ClientBotState nextState() {
+            return nextState;
+        }
+
+        @Override
+        public ClientBotState rootState() {
+            return MainMenu;
+        }
+    },
+
+    CancelSendingQuestion(false) {
+        @Override
+        public void enter(ClientBotContext clientBotContext) {
+            Question question = questionService.getByClientAndIsSent(clientBotContext.getClient(), false);
+            if (question != null) {
+                questionService.delete(question);
+                clientMessageService.sendCancelSendingQuestionMessage(clientBotContext);
+            } else {
+                clientMessageService.sendSomethingWentWrongMessage(clientBotContext);
+            }
+        }
+
+        @Override
+        public ClientBotState nextState() {
+            return MainMenu;
+        }
+
+        @Override
+        public ClientBotState rootState() {
+            return MainMenu;
+        }
+    },
+
+    SaveSendingQuestion(false) {
+        @Override
+        public void enter(ClientBotContext clientBotContext) {
+            Question question = questionService.getByClientAndIsSent(clientBotContext.getClient(), false);
+            if (question != null) {
+                question.setIsSent(true);
+                questionService.save(question);
+                clientMessageService.sendSendingQuestionMessage(clientBotContext);
+                adminMessageService.sendNotificationAboutNewClientQuestion(clientBotContext);
+            } else {
+                clientMessageService.sendSomethingWentWrongMessage(clientBotContext);
+            }
         }
 
         @Override
@@ -679,14 +775,14 @@ public enum ClientBotState implements BotState<ClientBotState, ClientBotContext>
     private static ClientMessageService clientMessageService;
     @Setter
     private static AdminMessageService adminMessageService;
-
     @Setter
     private static ClientService clientService;
-
     @Setter
     private static MessageSender messageSender;
     @Setter
     private static MessengerService messengerService;
+    @Setter
+    private static QuestionService questionService;
 
 
     private final Boolean isInputNeeded;
