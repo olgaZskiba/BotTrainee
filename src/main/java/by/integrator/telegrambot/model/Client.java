@@ -43,6 +43,20 @@ public class Client {
     @Column(name = "phoneNumber")
     private String phoneNumber;
 
+    @Column(name = "day")
+    private Integer day;
+
+    @EqualsAndHashCode.Exclude
+    @ToString.Exclude
+    @OneToMany(mappedBy = "currentClient", cascade = CascadeType.PERSIST)
+    private Set<Admin> currentAdmins;
+
+    @Column(name = "profileFilled", columnDefinition = "TINYINT(0)")
+    private Boolean profileFilled;
+
+    @Column(name = "processed", columnDefinition = "TINYINT(0)")
+    private Boolean processed;
+
     @EqualsAndHashCode.Exclude
     @ToString.Exclude
     @OneToOne(mappedBy = "client", cascade = CascadeType.ALL)
@@ -56,6 +70,11 @@ public class Client {
             joinColumns = @JoinColumn(name = "ClientId"),
             inverseJoinColumns = @JoinColumn(name = "MessegerId"))
     private Set<Messenger> messengers = new HashSet<>();
+
+    @EqualsAndHashCode.Exclude
+    @ToString.Exclude
+    @OneToMany(mappedBy = "client", fetch = FetchType.LAZY, cascade = { CascadeType.REMOVE, CascadeType.ALL })
+    private Set<Question> questions;
 
     public String getTelegramId() {
         return user.getTelegramId();

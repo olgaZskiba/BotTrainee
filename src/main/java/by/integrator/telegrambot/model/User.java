@@ -59,6 +59,9 @@ public class User {
     @Column(name = "BotLastMessageEditable", columnDefinition = "TINYINT(1)")
     private Boolean botLastMessageEditable;
 
+    @Column(name = "CurrentPage", nullable = false)
+    private Integer currentPage;
+
     @EqualsAndHashCode.Exclude
     @ToString.Exclude
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
@@ -66,6 +69,14 @@ public class User {
                 joinColumns = {@JoinColumn(name = "user_id", referencedColumnName = "id")},
                 inverseJoinColumns = {@JoinColumn(name = "client_id", referencedColumnName = "id")})
     private Client client;
+
+    @EqualsAndHashCode.Exclude
+    @ToString.Exclude
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinTable( name = "user_admin",
+            joinColumns = {@JoinColumn(name = "user_id", referencedColumnName = "id")},
+            inverseJoinColumns = {@JoinColumn(name = "admin_id", referencedColumnName = "id")})
+    private Admin admin;
 
     public Boolean hasLastBotMessage() {
         return botLastMessageId != null;

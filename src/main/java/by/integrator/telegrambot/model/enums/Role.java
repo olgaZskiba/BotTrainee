@@ -1,7 +1,8 @@
 package by.integrator.telegrambot.model.enums;
 
 public enum Role {
-    CLIENT("user");
+    CLIENT("user"),
+    ADMIN("admin");
 
     private String deepLink;
 
@@ -15,7 +16,7 @@ public enum Role {
 
     public static Role parseRole(String input) {
         for (Role role : Role.values()) {
-            if (role.getDeepLink().equals(input)) {
+            if (input.endsWith(role.getDeepLink())) {
                 return role;
             }
         }

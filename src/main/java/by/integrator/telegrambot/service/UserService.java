@@ -16,6 +16,8 @@ import by.integrator.telegrambot.repositories.UserRepository;
 @Service
 public class UserService {
 
+    public final static Integer DEFAULT_PAGE = 1;
+
     @Autowired
     private UserRepository userRepository;
 
@@ -48,6 +50,7 @@ public class UserService {
                 .botLastMessageDate(0)
                 .botLastMessageId(0)
                 .botLastMessageEditable(false)
+                .currentPage(DEFAULT_PAGE)
                 .role(role)
                 .build();
 

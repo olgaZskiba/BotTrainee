@@ -1,5 +1,7 @@
 package by.integrator.telegrambot.bot.config;
 
+import by.integrator.telegrambot.bot.api.admin.keyboard.inline.AdminInlineKeyboardMarkupSource;
+import by.integrator.telegrambot.bot.api.admin.keyboard.reply.AdminReplyKeyboardMarkupSource;
 import by.integrator.telegrambot.bot.api.client.keyboard.inline.ClientInlineKeyboardMarkupSource;
 import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
@@ -15,11 +17,11 @@ public class BotConfig {
 
     private final static String MESSAGE_SOURCE_BASENAME = "classpath:messages";
     private final static String DEFAULT_ENCODING = "UTF-8";
-    
+
     @Bean
     public MessageSource messageSource() {
         ReloadableResourceBundleMessageSource reloadableResourceBundleMessageSource =
-            new ReloadableResourceBundleMessageSource();
+                new ReloadableResourceBundleMessageSource();
 
         reloadableResourceBundleMessageSource.setBasename(MESSAGE_SOURCE_BASENAME);
         reloadableResourceBundleMessageSource.setDefaultEncoding(DEFAULT_ENCODING);
@@ -45,6 +47,16 @@ public class BotConfig {
     @Bean
     public ClientInlineKeyboardMarkupSource clientInlineKeyboardMarkupSource() {
         return new ClientInlineKeyboardMarkupSource();
+    }
+
+    @Bean
+    public AdminReplyKeyboardMarkupSource adminReplyKeyboardMarkupSource() {
+        return new AdminReplyKeyboardMarkupSource();
+    }
+
+    @Bean
+    public AdminInlineKeyboardMarkupSource adminInlineKeyboardMarkupSource() {
+        return new AdminInlineKeyboardMarkupSource();
     }
 
 }

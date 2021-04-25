@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import by.integrator.telegrambot.model.Client;
 import com.vdurmont.emoji.EmojiParser;
 
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
@@ -17,9 +18,11 @@ public class InlineKeyboardMarkupSource {
     public final static String SELECTED_EMOJI = ":white_check_mark:";
     public final static String CONTINUE_EMOJI = ":arrow_down:";
 
-    protected final static Integer ITEMS_PER_PAGE = 8;
+    public final static Integer ITEMS_PER_PAGE = 8;
     protected final static Integer START_PAGE = 1;
     protected final static String CALLBACK_PREFIX = "callback.";
+    protected final static String PROCESSED = "processed";
+    protected final static String ANSWER = "answer";
 
     private final static String PREVIOUS_PAGE_TEXT = EmojiParser.parseToUnicode(Emoji.ARROW_LEFT.getAlias());
     private final static String NEXT_PAGE_TEXT = EmojiParser.parseToUnicode(Emoji.ARROW_RIGHT.getAlias()); 
@@ -31,21 +34,21 @@ public class InlineKeyboardMarkupSource {
         return new InlineKeyboardMarkup();
     } 
 
-    protected <E extends Enum<E>, T> List<InlineKeyboardButton> getNavigateInlineButtons(Collection<?> items, Integer page, BotState<E, T> botState) {
+    protected <E extends Enum<E>, T> List<InlineKeyboardButton> getNavigateInlineButtons(Collection<?> items, Integer page) {
         InlineKeyboardButton button = null;
         List<InlineKeyboardButton> buttons = new ArrayList<>();
 
         if (page != START_PAGE) {
             button = new InlineKeyboardButton();
             button.setText(PREVIOUS_PAGE_TEXT);
-            button.setCallbackData(generateCallbackData(botState, PREVIOUS_PAGE_CALLBACK_SUFFIX));
+            button.setCallbackData(CALLBACK_PREFIX + PREVIOUS_PAGE_CALLBACK_SUFFIX);
             buttons.add(button);
         }
 
         if (!page.equals(calculateCountOfPages(items))) {
             button = new InlineKeyboardButton();
             button.setText(NEXT_PAGE_TEXT);
-            button.setCallbackData(generateCallbackData(botState, NEXT_PAGE_CALLBACK_SUFFIX));
+            button.setCallbackData(CALLBACK_PREFIX + NEXT_PAGE_CALLBACK_SUFFIX);
             buttons.add(button);
         }
 

@@ -3,6 +3,7 @@ package by.integrator.telegrambot.bot.api.client.keyboard.reply;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboard;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
@@ -60,6 +61,28 @@ public class ClientReplyKeyboardMarkupSource extends ReplyKeyboardMarkupSource {
         keyboardRows.add(firstKeyboardRowOne);
 
         replyKeyboardMarkup.setKeyboard(keyboardRows);
+        return replyKeyboardMarkup;
+    }
+
+    public ReplyKeyboard getSendQuestionKeyboard() {
+        final ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup();
+        replyKeyboardMarkup.setSelective(true);
+        replyKeyboardMarkup.setResizeKeyboard(true);
+        replyKeyboardMarkup.setOneTimeKeyboard(true);
+
+        List<KeyboardRow> keyboardRows = new ArrayList<>();
+
+        KeyboardRow keyboardRowOne = new KeyboardRow();
+        KeyboardRow keyboardRowTwo = new KeyboardRow();
+
+        keyboardRowOne.add(new KeyboardButton("Отправить"));
+        keyboardRowTwo.add(new KeyboardButton("Отмена"));
+
+        keyboardRows.add(keyboardRowOne);
+        keyboardRows.add(keyboardRowTwo);
+
+        replyKeyboardMarkup.setKeyboard(keyboardRows);
+
         return replyKeyboardMarkup;
     }
     
