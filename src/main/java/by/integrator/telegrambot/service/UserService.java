@@ -54,7 +54,7 @@ public class UserService {
                 .role(role)
                 .build();
 
-        this.save(user);
+        save(user);
 
         return user;
     }

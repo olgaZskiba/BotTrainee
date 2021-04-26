@@ -34,14 +34,29 @@ public class Client {
     @Column(name = "firstName")
     private String firstName;
 
-    @Column(name = "lastName")
-    private String lastName;
+    @Column(name = "problem", columnDefinition = "LONGTEXT")
+    private String problem;
+
+    @Column(name = "goals")
+    private String goals;
+
+    @Column(name = "fieldOfActivity")
+    private String fieldOfActivity;
+
+    @Column(name = "integrationToCrm")
+    private String integrationToCrm;
 
     @Column(name = "email")
     private String email;
 
     @Column(name = "phoneNumber")
     private String phoneNumber;
+
+    @Column(name = "userMessenger")
+    private String userMessenger;
+
+    @Column(name = "wayCommunication")
+    private String wayCommunication;
 
     @Column(name = "day")
     private Integer day;

@@ -19,6 +19,8 @@ public class ClientService {
     private ClientRepository clientRepository;
     @Autowired
     private MessengerService messengerService;
+    @Autowired
+    private UserService userService;
 
     @Transactional
     public void save(Client client) {
@@ -39,14 +41,15 @@ public class ClientService {
         Client client = Client.builder()
                 .clientBotState(ClientBotState.getInitialState())
                 .firstName(user.getFirstname())
-                .lastName(user.getLastname())
                 .user(user)
                 .profileFilled(false)
                 .processed(false)
+                .problem("")
                 .day(1)
                 .build();
 
         user.setClient(client);
+//        userService.save(user);
 
         return client;
     }
@@ -65,6 +68,16 @@ public class ClientService {
         return clientRepository.findAllByProfileFilledTrue();
     }
 
+    @Transactional
+    public List<Client> getByProcessedFalse() {
+        return clientRepository.findAllByProcessedFalse();
+    }
+
+    @Transactional
+    public List<Client> getByProcessedTrue() {
+        return clientRepository.findAllByProcessedTrue();
+    }
+
     public Integer countAllClients() {
         return clientRepository.findAll().size();
     }
@@ -76,5 +89,23 @@ public class ClientService {
     public void removeCurrents(Client client) {
         client.setQuestions(null);
         save(client);
+    }
+
+    public String checkProblem(String currentText, String newText) {
+        String text = "";
+        if (currentText != null) {
+            String[] parse = currentText.split(";");
+            if (parse.length != 0) {
+                for (String current : parse) {
+                    System.out.println(current);
+                    if (current.equals(newText.substring(0, newText.length() - 1))) {
+                        return currentText.replaceAll(newText, "");
+                    } else {
+                        return currentText.concat(newText);
+                    }
+                }
+            }
+        }
+        return text;
     }
 }

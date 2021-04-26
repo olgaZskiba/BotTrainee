@@ -17,6 +17,9 @@ public class AdminReplyKeyboardMarkupSource extends ReplyKeyboardMarkupSource {
     public static final String CLIENTS = "Клиенты";
     public static final String POSTPONE = "Отложенные сообщения";
     public static final String QUESTIONS = "Активные вопросы";
+    public static final String SETTING_TEXT = "Упраление текстами";
+    public static final String BEFORE_CONSULTATION = "До консультации";
+    public static final String AFTER_CONSULTATION = "После консультации";
 
     public static final String YES = "Все верно";
     public static final String NO = "Исправить";
@@ -34,16 +37,18 @@ public class AdminReplyKeyboardMarkupSource extends ReplyKeyboardMarkupSource {
         KeyboardRow firstKeyboardRowOne = new KeyboardRow();
         KeyboardRow firstKeyboardRowTwo = new KeyboardRow();
         KeyboardRow firstKeyboardRowThree = new KeyboardRow();
+        KeyboardRow firstKeyboardRowFour = new KeyboardRow();
 
 
         firstKeyboardRowOne.add(new KeyboardButton(CLIENTS));
         firstKeyboardRowThree.add(new KeyboardButton(POSTPONE));
-
         firstKeyboardRowTwo.add(new KeyboardButton(QUESTIONS + " " + questions.size()));
+        firstKeyboardRowFour.add(new KeyboardButton(SETTING_TEXT));
 
         keyboardRows.add(firstKeyboardRowTwo);
         keyboardRows.add(firstKeyboardRowThree);
         keyboardRows.add(firstKeyboardRowOne);
+        keyboardRows.add(firstKeyboardRowFour);
 
         replyKeyboardMarkup.setKeyboard(keyboardRows);
         return replyKeyboardMarkup;
@@ -89,6 +94,57 @@ public class AdminReplyKeyboardMarkupSource extends ReplyKeyboardMarkupSource {
         KeyboardRowOne.add(new KeyboardButton("Да"));
         KeyboardRowTwo.add(new KeyboardButton("Нет"));
         KeyboardRowThree.add(new KeyboardButton("Назад"));
+
+        keyboardRows.add(KeyboardRowOne);
+        keyboardRows.add(KeyboardRowTwo);
+        keyboardRows.add(KeyboardRowThree);
+
+        replyKeyboardMarkup.setKeyboard(keyboardRows);
+
+        return replyKeyboardMarkup;
+    }
+
+    public ReplyKeyboard getMenuNotificationSetting() {
+        final ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup();
+        replyKeyboardMarkup.setSelective(true);
+        replyKeyboardMarkup.setResizeKeyboard(true);
+        replyKeyboardMarkup.setOneTimeKeyboard(true);
+
+        List<KeyboardRow> keyboardRows = new ArrayList<>();
+
+        KeyboardRow KeyboardRowOne = new KeyboardRow();
+        KeyboardRow KeyboardRowTwo = new KeyboardRow();
+        KeyboardRow KeyboardRowThree = new KeyboardRow();
+
+        KeyboardRowOne.add(new KeyboardButton("До консультации"));
+        KeyboardRowTwo.add(new KeyboardButton("После консультации"));
+        KeyboardRowThree.add(new KeyboardButton("Назад"));
+
+        keyboardRows.add(KeyboardRowOne);
+        keyboardRows.add(KeyboardRowTwo);
+        keyboardRows.add(KeyboardRowThree);
+
+        replyKeyboardMarkup.setKeyboard(keyboardRows);
+
+        return replyKeyboardMarkup;
+    }
+
+    public ReplyKeyboard getMenuSettingSelectedNotification() {
+        final ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup();
+        replyKeyboardMarkup.setSelective(true);
+        replyKeyboardMarkup.setResizeKeyboard(true);
+        replyKeyboardMarkup.setOneTimeKeyboard(true);
+
+        List<KeyboardRow> keyboardRows = new ArrayList<>();
+
+        KeyboardRow KeyboardRowOne = new KeyboardRow();
+        KeyboardRow KeyboardRowTwo = new KeyboardRow();
+        KeyboardRow KeyboardRowThree = new KeyboardRow();
+
+        KeyboardRowOne.add(new KeyboardButton("Добавить"));
+        KeyboardRowTwo.add(new KeyboardButton("Удалить"));
+        KeyboardRowTwo.add(new KeyboardButton("Изменить"));
+        KeyboardRowThree.add(new KeyboardButton("Главное меню"));
 
         keyboardRows.add(KeyboardRowOne);
         keyboardRows.add(KeyboardRowTwo);

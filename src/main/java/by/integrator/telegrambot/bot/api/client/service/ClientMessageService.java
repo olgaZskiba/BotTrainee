@@ -65,11 +65,32 @@ public class ClientMessageService extends MessageService {
 
         } else {
             try {
-                Message message = messageSender.sendMessage(client.getTelegramId(), clientMessageSource.getMessage("message.start"), null);
+                messageSender.sendMessage(client.getTelegramId(),
+                        clientMessageSource.getMessage("message.start", client.getFirstName()), null);
 
-                updateLastBotMessage(client.getUser(), message);
+                Thread.sleep(2000);
             } catch (TelegramApiException ex) {
-                LOGGER.error("Unable to send start message to user: {0}, reason: {1}", client.getTelegramId(), ex.getLocalizedMessage());
+                LOGGER.error("Unable to send start message to user: " + client.getTelegramId() + ", reason: " + ex.getLocalizedMessage());
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public void sendStartTwoMessage(ClientBotContext clientBotContext) throws ClientNotFoundException {
+        Client client = clientBotContext.getClient();
+
+        if (client == null) throw new ClientNotFoundException();
+
+        if (checkEditableMessage(clientBotContext)) {
+
+        } else {
+            try {
+                messageSender.sendMessage(client.getTelegramId(),
+                        clientMessageSource.getMessage("message.start2", client.getFirstName()), null);
+
+            } catch (TelegramApiException ex) {
+                LOGGER.error("Unable to send start 2 message to user: " + client.getTelegramId() + ", reason: " + ex.getLocalizedMessage());
             }
         }
     }
@@ -122,9 +143,9 @@ public class ClientMessageService extends MessageService {
         } else {
             try {
                 Message message = messageSender.sendMessage(client.getTelegramId(), clientMessageSource.getMessage("message.mainMenu"),
-                        clientReplyKeyboardMarkupSource.getMainMenuKeyboard());
+                        clientReplyKeyboardMarkupSource.getMainMenuKeyboard(client));
 
-                updateLastBotMessage(client.getUser(), message);
+//                updateLastBotMessage(client.getUser(), message);
             } catch (TelegramApiException ex) {
                 LOGGER.error("Unable to send start message to user: {0}, reason: {1}", client.getTelegramId(), ex.getLocalizedMessage());
             }
@@ -198,7 +219,8 @@ public class ClientMessageService extends MessageService {
             messageSender.deleteBotLastMessage(client.getUser());
         }
         try {
-            Message message = messageSender.sendMessage(client.getTelegramId(), clientMessageSource.getMessage("message.lastName"),
+            Message message = messageSender.sendMessage(client.getTelegramId(),
+                    clientMessageSource.getMessage("message.lastName"),
                     null);
 
             updateLastBotMessage(client.getUser(), message);
@@ -217,13 +239,11 @@ public class ClientMessageService extends MessageService {
             messageSender.deleteBotLastMessage(client.getUser());
         }
         try {
-            ReplyKeyboardRemove replyKeyboardRemove = new ReplyKeyboardRemove();
-            replyKeyboardRemove.setRemoveKeyboard(true);
             Message message = messageSender.sendMessage(client.getTelegramId(), clientMessageSource.getMessage("message.email"),
-                    replyKeyboardRemove);
+                    clientInlineKeyboardMarkupSource.getSkipKeyboard());
             updateLastBotMessage(client.getUser(), message);
         } catch (TelegramApiException ex) {
-            LOGGER.error("Unable to send start message to user: {0}, reason: {1}", client.getTelegramId(), ex.getLocalizedMessage());
+            LOGGER.error("Unable to sendInputEmailMessage message to user: " + client.getTelegramId() + ", reason: " + ex.getLocalizedMessage());
         }
     }
 
@@ -233,16 +253,15 @@ public class ClientMessageService extends MessageService {
         if (client == null) throw new ClientNotFoundException();
 
         if (checkEditableMessage(clientBotContext)) {
+            messageSender.deleteBotLastMessage(client.getUser());
+        }
+        try {
+            Message message = messageSender.sendMessage(client.getTelegramId(), clientMessageSource.getMessage("message.phoneNumber"),
+                    clientReplyKeyboardMarkupSource.getPhoneNumberKeyboard());
 
-        } else {
-            try {
-                Message message = messageSender.sendMessage(client.getTelegramId(), clientMessageSource.getMessage("message.phoneNumber"),
-                        clientReplyKeyboardMarkupSource.getPhoneNumberKeyboard());
-
-                updateLastBotMessage(client.getUser(), message);
-            } catch (TelegramApiException ex) {
-                LOGGER.error("Unable to send start message to user: {0}, reason: {1}", client.getTelegramId(), ex.getLocalizedMessage());
-            }
+            updateLastBotMessage(client.getUser(), message);
+        } catch (TelegramApiException ex) {
+            LOGGER.error("Unable to send sendInputPhoneNumberMessage to user: " + client.getTelegramId() + ", reason: " + ex.getLocalizedMessage());
         }
     }
 
@@ -254,46 +273,40 @@ public class ClientMessageService extends MessageService {
         if (client == null) throw new ClientNotFoundException();
 
         if (checkEditableMessage(clientBotContext)) {
-            Message message = messageSender.editMessageReplyMarkup2(client.getTelegramId(),
-                    client.getUser().getBotLastMessageId(),
+            messageSender.deleteBotLastMessage(client.getUser());
+        }
+        try {
+            Message message = messageSender.sendMessage(client.getTelegramId(), clientMessageSource.getMessage("message.botType"),
                     clientInlineKeyboardMarkupSource.getListBotTypes(selectedMessengers, messengers));
-            updateLastBotMessage(client.getUser(), message);
-        } else {
-            try {
-                Message message = messageSender.sendMessage(client.getTelegramId(), clientMessageSource.getMessage("message.botType"),
-                        clientInlineKeyboardMarkupSource.getListBotTypes(selectedMessengers, messengers));
 
-                updateLastBotMessage(client.getUser(), message);
-            } catch (TelegramApiException ex) {
-                LOGGER.error("Unable to send start message to user: {0}, reason: {1}", client.getTelegramId(), ex.getLocalizedMessage());
-            }
+            updateLastBotMessage(client.getUser(), message);
+        } catch (TelegramApiException ex) {
+            LOGGER.error("Unable sendSelectBotTypeMessage message to user: " + client.getTelegramId() + ", reason: " + ex.getLocalizedMessage());
         }
     }
 
 
     @SneakyThrows
-    public void sendProfileMessage(ClientBotContext clientBotContext) throws ClientNotFoundException {
+    public void sendProfileMessage(ClientBotContext clientBotContext) {
         Client client = clientBotContext.getClient();
 
         if (client == null) throw new ClientNotFoundException();
 
         if (checkEditableMessage(clientBotContext)) {
-            Message message = messageSender.editMessageText(client.getTelegramId(),
-                    clientMessageSource.getMessage("message.profile", client.getLastName(), client.getFirstName(),
-                            client.getEmail(), client.getPhoneNumber(), messengerService.getClientMessengerList(client)),
-                    client.getUser().getBotLastMessageId(), clientInlineKeyboardMarkupSource.getConfirmInlineKeyboard());
-            updateLastBotMessage(client.getUser(), message);
-        } else {
-            try {
-                Message message = messageSender.sendMessage(client.getTelegramId(), clientMessageSource.getMessage("message.profile", client.getLastName(), client.getFirstName(),
-                        client.getEmail(), client.getPhoneNumber(), messengerService.getClientMessengerList(client)),
-                        clientInlineKeyboardMarkupSource.getConfirmInlineKeyboard());
-
-                updateLastBotMessage(client.getUser(), message);
-            } catch (TelegramApiException ex) {
-                LOGGER.error("Unable to send start message to user: {0}, reason: {1}", client.getTelegramId(), ex.getLocalizedMessage());
-            }
+            messageSender.deleteBotLastMessage(client.getUser());
         }
+        try {
+            Message message = messageSender.sendMessage(client.getTelegramId(), clientMessageSource.getMessage("message.profile",
+                    client.getFirstName(), client.getProblem(),
+                    client.getGoals(), client.getFieldOfActivity(), messengerService.getClientMessengerList(client),
+                    client.getIntegrationToCrm(), client.getWayCommunication(), client.getPhoneNumber()),
+                    clientInlineKeyboardMarkupSource.getConfirmInlineKeyboard());
+
+            updateLastBotMessage(client.getUser(), message);
+        } catch (TelegramApiException ex) {
+            LOGGER.error("Unable to send start message to user: {0}, reason: {1}", client.getTelegramId(), ex.getLocalizedMessage());
+        }
+
     }
 
     @SneakyThrows
@@ -326,12 +339,13 @@ public class ClientMessageService extends MessageService {
 
         } else {
             try {
-                Message message = messageSender.sendMessage(client.getTelegramId(), clientMessageSource.getMessage("message.askQuestion"),
+                Message message = messageSender.sendMessage(client.getTelegramId(),
+                        clientMessageSource.getMessage("message.askQuestion"),
                         clientReplyKeyboardMarkupSource.getSendQuestionKeyboard());
 
                 updateLastBotMessage(client.getUser(), message);
             } catch (TelegramApiException ex) {
-                LOGGER.error("Unable to send start message to user: {0}, reason: {1}", client.getTelegramId(), ex.getLocalizedMessage());
+                LOGGER.error("Unable to sendAskQuestionMessage to user: " + client.getTelegramId() + ", reason: " + ex.getLocalizedMessage());
             }
         }
     }
@@ -381,20 +395,18 @@ public class ClientMessageService extends MessageService {
         if (client == null) throw new ClientNotFoundException();
 
         if (checkEditableMessage(clientBotContext)) {
-            Message message = messageSender.editMessageText(client.getTelegramId(),
-                    clientMessageSource.getMessage("message.selectFieldForChange"), client.getUser().getBotLastMessageId(),
-                    clientInlineKeyboardMarkupSource.getClientFieldsInlineKeyboard());
-            updateLastBotMessage(client.getUser(), message);
-        } else {
-            try {
-                Message message = messageSender.sendMessage(client.getTelegramId(),
-                        clientMessageSource.getMessage("message.selectFieldForChange"), clientInlineKeyboardMarkupSource.getClientFieldsInlineKeyboard());
-
-                updateLastBotMessage(client.getUser(), message);
-            } catch (TelegramApiException ex) {
-                LOGGER.error("Unable to send start message to user: {0}, reason: {1}", client.getTelegramId(), ex.getLocalizedMessage());
-            }
+            messageSender.deleteBotLastMessage(client.getUser());
         }
+        try {
+            Message message = messageSender.sendMessage(client.getTelegramId(),
+                    clientMessageSource.getMessage("message.selectFieldForChange"),
+                    clientInlineKeyboardMarkupSource.getClientFieldsInlineKeyboard());
+
+            updateLastBotMessage(client.getUser(), message);
+        } catch (TelegramApiException ex) {
+            LOGGER.error("Unable to send start message to user: " + client.getTelegramId() + ", reason: " + ex.getLocalizedMessage());
+        }
+
     }
 
     @SneakyThrows
@@ -451,6 +463,126 @@ public class ClientMessageService extends MessageService {
             updateLastBotMessage(client.getUser(), message);
         } catch (TelegramApiException ex) {
             LOGGER.error("Unable to sendSendingQuestionMessage to user: " + client.getTelegramId() + ", reason: " + ex.getLocalizedMessage());
+        }
+    }
+
+    @SneakyThrows
+    public void sendWhatProblemsShouldBotSolve(ClientBotContext clientBotContext) {
+        Client client = clientBotContext.getClient();
+
+        if (client == null) throw new ClientNotFoundException();
+
+        if (checkEditableMessage(clientBotContext)) {
+            messageSender.deleteBotLastMessage(client.getUser());
+        }
+        try {
+            Message message = messageSender.sendMessage(client.getTelegramId(),
+                    clientMessageSource.getMessage("message.whatProblemsShouldBotSolve"),
+                    clientInlineKeyboardMarkupSource.getButtonsWhatProblemsShouldBotSolve(client));
+
+            updateLastBotMessage(client.getUser(), message);
+        } catch (TelegramApiException ex) {
+            LOGGER.error("Unable to sendWhatProblemsShouldBotSolve to user: " + client.getTelegramId() + ", reason: " + ex.getLocalizedMessage());
+        }
+    }
+
+    @SneakyThrows
+    public void sendInputGoals(ClientBotContext clientBotContext) {
+        Client client = clientBotContext.getClient();
+
+        if (client == null) throw new ClientNotFoundException();
+
+        if (checkEditableMessage(clientBotContext)) {
+            messageSender.deleteBotLastMessage(client.getUser());
+        }
+        try {
+            Message message = messageSender.sendMessage(client.getTelegramId(),
+                    clientMessageSource.getMessage("message.InputGoals"),
+                    null);
+
+            updateLastBotMessage(client.getUser(), message);
+        } catch (TelegramApiException ex) {
+            LOGGER.error("Unable to sendInputGoals to user: " + client.getTelegramId() + ", reason: " + ex.getLocalizedMessage());
+        }
+    }
+
+    @SneakyThrows
+    public void sendInputFieldOfActivity(ClientBotContext clientBotContext) {
+        Client client = clientBotContext.getClient();
+
+        if (client == null) throw new ClientNotFoundException();
+
+        if (checkEditableMessage(clientBotContext)) {
+            messageSender.deleteBotLastMessage(client.getUser());
+        }
+        try {
+            Message message = messageSender.sendMessage(client.getTelegramId(),
+                    clientMessageSource.getMessage("message.InputFieldOfActivity"),
+                    null);
+
+            updateLastBotMessage(client.getUser(), message);
+        } catch (TelegramApiException ex) {
+            LOGGER.error("Unable to sendInputFieldOfActivity to user: " + client.getTelegramId() + ", reason: " + ex.getLocalizedMessage());
+        }
+    }
+
+    @SneakyThrows
+    public void sendSelectIntegrationToCrm(ClientBotContext clientBotContext) {
+        Client client = clientBotContext.getClient();
+
+        if (client == null) throw new ClientNotFoundException();
+
+        if (checkEditableMessage(clientBotContext)) {
+            messageSender.deleteBotLastMessage(client.getUser());
+        }
+        try {
+            Message message = messageSender.sendMessage(client.getTelegramId(),
+                    clientMessageSource.getMessage("message.SelectIntegrationToCrm"),
+                    clientInlineKeyboardMarkupSource.getIntegrationToCrmKeyboard());
+
+            updateLastBotMessage(client.getUser(), message);
+        } catch (TelegramApiException ex) {
+            LOGGER.error("Unable to sendSelectIntegrationToCrm to user: " + client.getTelegramId() + ", reason: " + ex.getLocalizedMessage());
+        }
+    }
+
+    @SneakyThrows
+    public void sendConfirmationForConsultation(ClientBotContext clientBotContext) {
+        Client client = clientBotContext.getClient();
+
+        if (client == null) throw new ClientNotFoundException();
+
+        if (checkEditableMessage(clientBotContext)) {
+            messageSender.deleteBotLastMessage(client.getUser());
+        }
+        try {
+            Message message = messageSender.sendMessage(client.getTelegramId(),
+                    clientMessageSource.getMessage("message.ConfirmationForConsultation", client.getFirstName()),
+                    clientInlineKeyboardMarkupSource.getFreeConsultationKeyboard());
+
+            updateLastBotMessage(client.getUser(), message);
+        } catch (TelegramApiException ex) {
+            LOGGER.error("Unable to sendConfirmationForConsultation to user: " + client.getTelegramId() + ", reason: " + ex.getLocalizedMessage());
+        }
+    }
+
+    @SneakyThrows
+    public void sendWayCommunicationMessage(ClientBotContext clientBotContext) {
+        Client client = clientBotContext.getClient();
+
+        if (client == null) throw new ClientNotFoundException();
+
+        if (checkEditableMessage(clientBotContext)) {
+            messageSender.deleteBotLastMessage(client.getUser());
+        }
+        try {
+            Message message = messageSender.sendMessage(client.getTelegramId(),
+                    clientMessageSource.getMessage("message.WayCommunicationMessage", client.getFirstName()),
+                    clientInlineKeyboardMarkupSource.getWayCommunicationKeyboard());
+
+            updateLastBotMessage(client.getUser(), message);
+        } catch (TelegramApiException ex) {
+            LOGGER.error("Unable to sendConfirmationForConsultation to user: " + client.getTelegramId() + ", reason: " + ex.getLocalizedMessage());
         }
     }
 }

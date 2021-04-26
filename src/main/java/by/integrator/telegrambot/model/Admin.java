@@ -37,6 +37,12 @@ public class Admin {
     @JoinColumn(name = "CurrentQuestionId")
     private Question currentQuestion;
 
+    @EqualsAndHashCode.Exclude
+    @ToString.Exclude
+    @ManyToOne
+    @JoinColumn(name = "CurrentNotificationId")
+    private Notification currentNotification;
+
     @Column(name = "admin_bot_state", nullable = false)
     @Enumerated(EnumType.ORDINAL)
     private AdminBotState adminBotState;

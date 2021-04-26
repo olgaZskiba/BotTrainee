@@ -6,13 +6,12 @@ import by.integrator.telegrambot.bot.api.admin.keyboard.reply.AdminReplyKeyboard
 import by.integrator.telegrambot.bot.api.admin.service.AdminMessageService;
 import by.integrator.telegrambot.bot.keyboard.InlineKeyboardMarkupSource;
 import by.integrator.telegrambot.exception.AdminBotStateException;
-import by.integrator.telegrambot.model.Admin;
-import by.integrator.telegrambot.model.Client;
-import by.integrator.telegrambot.model.PostponeMessage;
-import by.integrator.telegrambot.model.Question;
+import by.integrator.telegrambot.model.*;
+import by.integrator.telegrambot.model.enums.NotificationType;
 import by.integrator.telegrambot.service.*;
 import by.integrator.telegrambot.validation.ValidationResult;
 import by.integrator.telegrambot.validation.Validator;
+import com.vdurmont.emoji.EmojiParser;
 import lombok.Setter;
 import lombok.SneakyThrows;
 import org.telegram.telegrambots.meta.api.objects.PhotoSize;
@@ -25,31 +24,15 @@ import java.util.List;
 import java.util.Objects;
 
 public enum AdminBotState implements BotState<AdminBotState, AdminBotContext> {
-    Start(true) {
+    Start(false) {
         private AdminBotState nextState = null;
 
         @SneakyThrows
         @Override
         public void enter(AdminBotContext botContext) {
             adminMessageService.sendStartMessage(botContext);
-        }
-
-        @SneakyThrows
-        @Override
-        public void handleText(AdminBotContext botContext) {
-            String userAnswer = botContext.getUpdate().getMessage().getText();
-            ValidationResult validationResult = Validator.isFirstNameValid(userAnswer);
-
-            if (validationResult.getIsValid()) {
-                Admin admin = botContext.getAdmin();
-                admin.setFirstName(userAnswer);
-
-                adminService.save(admin);
-                nextState = MainMenu;
-            } else {
-                adminMessageService.sendInvalidInputMessage(botContext, validationResult.getMessage());
-                nextState = null;
-            }
+            Admin admin = botContext.getAdmin();
+            admin.setFirstName(botContext.getUpdate().getMessage().getFrom().getFirstName());
         }
 
         @Override
@@ -63,15 +46,32 @@ public enum AdminBotState implements BotState<AdminBotState, AdminBotContext> {
         }
     },
 
-    InputFirstName(true) {
+    MainMenu(true) {
         private AdminBotState nextState = null;
 
         @SneakyThrows
         @Override
         public void enter(AdminBotContext botContext) {
-            adminMessageService.sendInputFirstNameMessage(botContext);
+            adminMessageService.sendMainMenuMessage(botContext);
         }
 
+        @Override
+        public void handleText(AdminBotContext botContext) {
+            String userAnswer = botContext.getUpdate().getMessage().getText();
+            if (AdminReplyKeyboardMarkupSource.CLIENTS.equals(userAnswer)) {
+                nextState = ClientList;
+            } else if (AdminReplyKeyboardMarkupSource.POSTPONE.equals(userAnswer)) {
+                nextState = SettingsPostponeMessage;
+            } else if (AdminReplyKeyboardMarkupSource.SETTING_TEXT.equals(userAnswer)) {
+                nextState = SelectTypeNotification;
+            } else {
+                if (userAnswer.startsWith(AdminReplyKeyboardMarkupSource.QUESTIONS)) {
+                    nextState = ClientQuestions;
+                    return;
+                }
+                nextState = MainMenu;
+            }
+        }
 
         @Override
         public AdminBotState nextState() {
@@ -97,13 +97,24 @@ public enum AdminBotState implements BotState<AdminBotState, AdminBotContext> {
         @Override
         public void handleText(AdminBotContext botContext) {
             String userAnswer = botContext.getUpdate().getMessage().getText();
-            messageSender.sendMessage(botContext.getAdmin().getTelegramId(),
-                    userAnswer, null);
+            if (AdminReplyKeyboardMarkupSource.CLIENTS.equals(userAnswer)) {
+                nextState = ClientList;
+            } else if (AdminReplyKeyboardMarkupSource.POSTPONE.equals(userAnswer)) {
+                nextState = SettingsPostponeMessage;
+            } else if (AdminReplyKeyboardMarkupSource.SETTING_TEXT.equals(userAnswer)) {
+                nextState = SelectTypeNotification;
+            } else {
+                if (userAnswer.startsWith(AdminReplyKeyboardMarkupSource.QUESTIONS)) {
+                    nextState = ClientQuestions;
+                    return;
+                }
+                nextState = MainMenu;
+            }
         }
 
         @Override
         public void handleCallbackQuery(AdminBotContext adminBotContext) {
-            String callbackData = adminBotContext.getUpdate().getCallbackQuery().getData();
+            String callbackData = EmojiParser.removeAllEmojis(adminBotContext.getUpdate().getCallbackQuery().getData());
 
             Integer countOfClients = clientService.countAllClients();
             Integer page = adminBotContext.getAdmin().getUser().getCurrentPage();
@@ -226,8 +237,7 @@ public enum AdminBotState implements BotState<AdminBotState, AdminBotContext> {
         public void handleCallbackQuery(AdminBotContext adminBotContext) {
             String callbackData = adminBotContext.getUpdate().getCallbackQuery().getData();
             String[] parseData = callbackData.substring(16).split("\\.");
-            System.out.println(callbackData);
-            System.out.println(parseData);
+
             int clientId = Integer.parseInt(parseData[0]);
             int questionId = Integer.parseInt(parseData[1]);
 
@@ -571,28 +581,528 @@ public enum AdminBotState implements BotState<AdminBotState, AdminBotContext> {
         }
     },
 
-    MainMenu(true) {
-        private AdminBotState nextState = null;
+    SettingNotificationBeforeConsultation(true) {
+        AdminBotState nextState;
 
-        @SneakyThrows
         @Override
         public void enter(AdminBotContext botContext) {
-            adminMessageService.sendMainMenuMessage(botContext);
+            adminMessageService.sendMenuSettingSelectedNotification(botContext);
         }
 
         @Override
         public void handleText(AdminBotContext botContext) {
-            String userAnswer = botContext.getUpdate().getMessage().getText();
-            if (AdminReplyKeyboardMarkupSource.CLIENTS.equals(userAnswer)) {
-                nextState = ClientList;
-            } else if (AdminReplyKeyboardMarkupSource.POSTPONE.equals(userAnswer)) {
-                nextState = SettingsPostponeMessage;
-            } else {
-                if (userAnswer.startsWith(AdminReplyKeyboardMarkupSource.QUESTIONS)) {
-                    nextState = ClientQuestions;
-                    return;
-                }
-                nextState = MainMenu;
+            switch (botContext.getUpdate().getMessage().getText()) {
+                case "Добавить":
+                    nextState = InputNotificationBeforeConsultation;
+                    break;
+                case "Изменить":
+                    nextState = SelectForChangeNotificationBeforeConsultation;
+                    break;
+                case "Удалить":
+                    nextState = SelectForDeleteNotificationBeforeConsultation;
+                    break;
+                case "Назад":
+                    nextState = SelectTypeNotification;
+                    break;
+                default:
+                    nextState = MainMenu;
+                    break;
+            }
+        }
+
+        @Override
+        public AdminBotState nextState() {
+            return nextState;
+        }
+
+        @Override
+        public AdminBotState rootState() {
+            return MainMenu;
+        }
+    },
+
+    SettingNotificationAfterConsultation(true) {
+        AdminBotState nextState;
+
+        @Override
+        public void enter(AdminBotContext botContext) {
+            adminMessageService.sendMenuSettingSelectedNotification(botContext);
+        }
+
+        @Override
+        public void handleText(AdminBotContext botContext) {
+            switch (botContext.getUpdate().getMessage().getText()) {
+                case "Добавить":
+                    nextState = InputNotificationAfterConsultation;
+                    break;
+                case "Изменить":
+                    nextState = SelectForChangeNotificationAfterConsultation;
+                    break;
+                case "Удалить":
+                    nextState = SelectForDeleteNotificationAfterConsultation;
+                    break;
+                case "Назад":
+                    nextState = SelectTypeNotification;
+                    break;
+                default:
+                    nextState = MainMenu;
+                    break;
+            }
+        }
+
+        @Override
+        public AdminBotState nextState() {
+            return nextState;
+        }
+
+        @Override
+        public AdminBotState rootState() {
+            return MainMenu;
+        }
+    },
+
+    SelectForChangeNotificationBeforeConsultation(true) {
+        AdminBotState nextState;
+
+        @Override
+        public void enter(AdminBotContext botContext) {
+            adminMessageService.sendChangeNotificationBeforeConsultation(botContext);
+        }
+
+        @Override
+        public void handleText(AdminBotContext botContext) {
+            switch (botContext.getUpdate().getMessage().getText()) {
+                case "Добавить":
+                    nextState = InputNotificationBeforeConsultation;
+                    break;
+                case "Изменить":
+                    nextState = SelectForChangeNotificationBeforeConsultation;
+                    break;
+                case "Удалить":
+                    nextState = SelectForDeleteNotificationBeforeConsultation;
+                    break;
+                case "Назад":
+                    nextState = SelectTypeNotification;
+                    break;
+                default:
+                    nextState = MainMenu;
+                    break;
+            }
+        }
+
+        @Override
+        public void handleCallbackQuery(AdminBotContext adminBotContext) {
+            String data = adminBotContext.getUpdate().getCallbackQuery().getData();
+            int notificationId = Integer.parseInt(data);
+            Notification notification = notificationService.getById(notificationId);
+            if (notification != null) {
+                adminBotContext.getAdmin().setCurrentNotification(notification);
+                nextState = InputChangedNotificationBeforeConsultation;
+            }
+        }
+
+        @Override
+        public AdminBotState nextState() {
+            return nextState;
+        }
+
+        @Override
+        public AdminBotState rootState() {
+            return MainMenu;
+        }
+    },
+
+    SelectForDeleteNotificationBeforeConsultation(true) {
+        AdminBotState nextState;
+
+        @Override
+        public void enter(AdminBotContext botContext) {
+            adminMessageService.sendDeleteNotificationBeforeConsultation(botContext);
+        }
+
+        @Override
+        public void handleText(AdminBotContext botContext) {
+            switch (botContext.getUpdate().getMessage().getText()) {
+                case "Добавить":
+                    nextState = InputNotificationBeforeConsultation;
+                    break;
+                case "Изменить":
+                    nextState = SelectForChangeNotificationBeforeConsultation;
+                    break;
+                case "Удалить":
+                    nextState = SelectForDeleteNotificationBeforeConsultation;
+                    break;
+                case "Назад":
+                    nextState = SelectTypeNotification;
+                    break;
+                default:
+                    nextState = MainMenu;
+                    break;
+            }
+        }
+
+        @Override
+        public void handleCallbackQuery(AdminBotContext adminBotContext) {
+            String data = adminBotContext.getUpdate().getCallbackQuery().getData();
+            int notificationId = Integer.parseInt(data);
+            Notification notification = notificationService.getById(notificationId);
+            if (notification != null) {
+                notificationService.delete(notification);
+                nextState = SuccessDeletedNotificationAfterConsultation;
+            }
+        }
+
+        @Override
+        public AdminBotState nextState() {
+            return nextState;
+        }
+
+        @Override
+        public AdminBotState rootState() {
+            return MainMenu;
+        }
+    },
+
+    SelectForChangeNotificationAfterConsultation(true) {
+        AdminBotState nextState;
+
+        @Override
+        public void enter(AdminBotContext botContext) {
+            adminMessageService.sendChangeNotificationAfterConsultation(botContext);
+        }
+
+        @Override
+        public void handleText(AdminBotContext botContext) {
+            switch (botContext.getUpdate().getMessage().getText()) {
+                case "Добавить":
+                    nextState = InputNotificationAfterConsultation;
+                    break;
+                case "Изменить":
+                    nextState = SelectForChangeNotificationAfterConsultation;
+                    break;
+                case "Удалить":
+                    nextState = SelectForDeleteNotificationAfterConsultation;
+                    break;
+                case "Назад":
+                    nextState = SelectTypeNotification;
+                    break;
+                default:
+                    nextState = MainMenu;
+                    break;
+            }
+        }
+
+        @Override
+        public void handleCallbackQuery(AdminBotContext adminBotContext) {
+            String data = adminBotContext.getUpdate().getCallbackQuery().getData();
+            int notificationId = Integer.parseInt(data);
+            Notification notification = notificationService.getById(notificationId);
+            if (notification != null) {
+                adminBotContext.getAdmin().setCurrentNotification(notification);
+                nextState = InputChangedNotificationAfterConsultation;
+            }
+        }
+
+        @Override
+        public AdminBotState nextState() {
+            return nextState;
+        }
+
+        @Override
+        public AdminBotState rootState() {
+            return MainMenu;
+        }
+    },
+
+    SelectForDeleteNotificationAfterConsultation(true) {
+        AdminBotState nextState;
+
+        @Override
+        public void enter(AdminBotContext botContext) {
+            adminMessageService.sendDeleteNotificationAfterConsultation(botContext);
+        }
+
+        @Override
+        public void handleText(AdminBotContext botContext) {
+            switch (botContext.getUpdate().getMessage().getText()) {
+                case "Добавить":
+                    nextState = InputNotificationAfterConsultation;
+                    break;
+                case "Изменить":
+                    nextState = SelectForChangeNotificationAfterConsultation;
+                    break;
+                case "Удалить":
+                    nextState = SelectForDeleteNotificationAfterConsultation;
+                    break;
+                case "Назад":
+                    nextState = SelectTypeNotification;
+                    break;
+                default:
+                    nextState = MainMenu;
+                    break;
+            }
+        }
+
+        @Override
+        public void handleCallbackQuery(AdminBotContext adminBotContext) {
+            String data = adminBotContext.getUpdate().getCallbackQuery().getData();
+            int notificationId = Integer.parseInt(data);
+            Notification notification = notificationService.getById(notificationId);
+            if (notification != null) {
+                notificationService.delete(notification);
+                nextState = SuccessDeletedNotificationAfterConsultation;
+            }
+        }
+
+        @Override
+        public AdminBotState nextState() {
+            return nextState;
+        }
+
+        @Override
+        public AdminBotState rootState() {
+            return MainMenu;
+        }
+    },
+
+    InputChangedNotificationBeforeConsultation(true) {
+        AdminBotState nextState;
+
+        @Override
+        public void enter(AdminBotContext botContext) {
+            adminMessageService.sendInputChangedNotificationBeforeConsultation(botContext);
+        }
+
+        @Override
+        public void handleText(AdminBotContext botContext) {
+            Notification notification = botContext.getAdmin().getCurrentNotification();
+            notification.setText(botContext.getUpdate().getMessage().getText());
+            notificationService.save(notification);
+        }
+
+        @Override
+        public AdminBotState nextState() {
+            return SuccessChangedNotificationBeforeConsultation;
+        }
+
+        @Override
+        public AdminBotState rootState() {
+            return MainMenu;
+        }
+    },
+
+    InputChangedNotificationAfterConsultation(true) {
+        AdminBotState nextState;
+
+        @Override
+        public void enter(AdminBotContext botContext) {
+            adminMessageService.sendInputChangedNotificationAfterConsultation(botContext);
+        }
+
+        @Override
+        public void handleText(AdminBotContext botContext) {
+            Notification notification = botContext.getAdmin().getCurrentNotification();
+            notification.setText(botContext.getUpdate().getMessage().getText());
+            notificationService.save(notification);
+        }
+
+        @Override
+        public AdminBotState nextState() {
+            return SuccessChangedNotificationAfterConsultation;
+        }
+
+        @Override
+        public AdminBotState rootState() {
+            return MainMenu;
+        }
+    },
+
+    InputNotificationBeforeConsultation(true) {
+        AdminBotState nextState;
+
+        @Override
+        public void enter(AdminBotContext botContext) {
+            adminMessageService.sendInputNotificationBeforeConsultation(botContext);
+        }
+
+        @Override
+        public void handleText(AdminBotContext botContext) {
+            notificationService.createNotification(botContext.getUpdate().getMessage().getText(),
+                    NotificationType.BEFORE);
+        }
+
+        @Override
+        public AdminBotState nextState() {
+            return SuccessAddedNotificationBeforeConsultation;
+        }
+
+        @Override
+        public AdminBotState rootState() {
+            return MainMenu;
+        }
+    },
+
+    InputNotificationAfterConsultation(true) {
+        AdminBotState nextState;
+
+        @Override
+        public void enter(AdminBotContext botContext) {
+            adminMessageService.sendInputNotificationAfterConsultation(botContext);
+        }
+
+        @Override
+        public void handleText(AdminBotContext botContext) {
+            notificationService.createNotification(botContext.getUpdate().getMessage().getText(),
+                    NotificationType.AFTER);
+        }
+
+        @Override
+        public AdminBotState nextState() {
+            return SuccessAddedNotificationAfterConsultation;
+        }
+
+        @Override
+        public AdminBotState rootState() {
+            return MainMenu;
+        }
+    },
+
+    SuccessAddedNotificationBeforeConsultation(false) {
+        AdminBotState nextState;
+
+        @Override
+        public void enter(AdminBotContext botContext) {
+            adminMessageService.sendSuccessAddedNotificationBeforeConsultation(botContext);
+        }
+
+        @Override
+        public AdminBotState nextState() {
+            return SelectTypeNotification;
+        }
+
+        @Override
+        public AdminBotState rootState() {
+            return MainMenu;
+        }
+    },
+
+    SuccessChangedNotificationBeforeConsultation(false) {
+        AdminBotState nextState;
+
+        @Override
+        public void enter(AdminBotContext botContext) {
+            adminMessageService.sendSuccessChangedNotificationBeforeConsultation(botContext);
+            botContext.getAdmin().setCurrentNotification(null);
+        }
+
+        @Override
+        public AdminBotState nextState() {
+            return SelectTypeNotification;
+        }
+
+        @Override
+        public AdminBotState rootState() {
+            return MainMenu;
+        }
+    },
+
+    SuccessChangedNotificationAfterConsultation(false) {
+        AdminBotState nextState;
+
+        @Override
+        public void enter(AdminBotContext botContext) {
+            adminMessageService.sendSuccessChangedNotificationAfterConsultation(botContext);
+            botContext.getAdmin().setCurrentNotification(null);
+        }
+
+        @Override
+        public AdminBotState nextState() {
+            return SelectTypeNotification;
+        }
+
+        @Override
+        public AdminBotState rootState() {
+            return MainMenu;
+        }
+    },
+
+    SuccessDeletedNotificationBeforeConsultation(false) {
+        AdminBotState nextState;
+
+        @Override
+        public void enter(AdminBotContext botContext) {
+            adminMessageService.sendSuccessDeletedNotificationBeforeConsultation(botContext);
+        }
+
+        @Override
+        public AdminBotState nextState() {
+            return SelectTypeNotification;
+        }
+
+        @Override
+        public AdminBotState rootState() {
+            return MainMenu;
+        }
+    },
+
+    SuccessDeletedNotificationAfterConsultation(false) {
+        AdminBotState nextState;
+
+        @Override
+        public void enter(AdminBotContext botContext) {
+            adminMessageService.sendSuccessDeletedNotificationAfterConsultation(botContext);
+        }
+
+        @Override
+        public AdminBotState nextState() {
+            return SelectTypeNotification;
+        }
+
+        @Override
+        public AdminBotState rootState() {
+            return MainMenu;
+        }
+    },
+
+    SuccessAddedNotificationAfterConsultation(false) {
+        AdminBotState nextState;
+
+        @Override
+        public void enter(AdminBotContext botContext) {
+            adminMessageService.sendSuccessAddedNotificationAfterConsultation(botContext);
+        }
+
+        @Override
+        public AdminBotState nextState() {
+            return SelectTypeNotification;
+        }
+
+        @Override
+        public AdminBotState rootState() {
+            return MainMenu;
+        }
+    },
+
+    SelectTypeNotification(true) {
+        AdminBotState nextState;
+
+        @Override
+        public void enter(AdminBotContext botContext) {
+            adminMessageService.sendMenuSettingNotification(botContext);
+        }
+
+        @Override
+        public void handleText(AdminBotContext botContext) {
+            switch (botContext.getUpdate().getMessage().getText()) {
+                case AdminReplyKeyboardMarkupSource.BEFORE_CONSULTATION:
+                    nextState = SettingNotificationBeforeConsultation;
+                    break;
+                case AdminReplyKeyboardMarkupSource.AFTER_CONSULTATION:
+                    nextState = SettingNotificationAfterConsultation;
+                    break;
+                default:
+                    nextState = MainMenu;
+                    break;
             }
         }
 
@@ -621,6 +1131,8 @@ public enum AdminBotState implements BotState<AdminBotState, AdminBotContext> {
     private static MessengerService messengerService;
     @Setter
     private static PostponeMessageService postponeMessageService;
+    @Setter
+    private static NotificationService notificationService;
 
     private final Boolean isInputNeeded;
 

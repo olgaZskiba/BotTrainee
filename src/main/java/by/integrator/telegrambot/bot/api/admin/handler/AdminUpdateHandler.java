@@ -86,7 +86,7 @@ public class AdminUpdateHandler extends UpdateHandler {
     }
 
     @Override
-    public void processContact(Update update) throws ClientBotStateException {
+    public void processContact(Update update) {
 
     }
 

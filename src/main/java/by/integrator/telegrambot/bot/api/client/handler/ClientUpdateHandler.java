@@ -18,11 +18,13 @@ import by.integrator.telegrambot.service.UserService;
 
 @Component
 public class ClientUpdateHandler extends UpdateHandler {
-    
+
     private final static Logger LOGGER = LoggerFactory.getLogger(ClientUpdateHandler.class);
 
-    @Autowired private UserService userService;
-    @Autowired private ClientService clientService;
+    @Autowired
+    private UserService userService;
+    @Autowired
+    private ClientService clientService;
 
     private void updateState(User user, ClientBotState clientBotState) {
         if (user != null && user.getClient() != null && clientBotState != null) {
@@ -48,22 +50,21 @@ public class ClientUpdateHandler extends UpdateHandler {
                 botState = client.getClientBotState();
 
                 botState.enter(botContext);
-                
-                while(!botState.getIsInputNeeded()) {
+
+                while (!botState.getIsInputNeeded()) {
                     if (botState.nextState() != null) {
                         botState = botState.nextState();
                         botState.enter(botContext);
-                    }
-                    else {
+                        updateState(user, botState);
+                    } else {
                         break;
                     }
                 }
-            }
-            else {
+            } else {
                 botContext = ClientBotContext.of(client, update);
                 botState = client.getClientBotState();
 
-                LOGGER.info("[{0} | {1}] Text: {2}", chatId, botState, update.getMessage().getText());
+                LOGGER.info("[" + chatId + " | " + botState + "] Text: " + update.getMessage().getText());
 
                 botState.handleText(botContext);
 
@@ -71,18 +72,15 @@ public class ClientUpdateHandler extends UpdateHandler {
                     if (botState.nextState() != null) {
                         botState = botState.nextState();
                         botState.enter(botContext);
-                    }
-                    else {
+                    } else {
                         break;
                     }
                 } while (!botState.getIsInputNeeded());
             }
-        }
-        catch (ClientBotStateException ex) {
+        } catch (ClientBotStateException ex) {
             botState = ((ClientBotStateException) ex).getExceptionState().rootState();
             botState.enter(botContext);
-        }
-        finally {
+        } finally {
             updateState(user, botState);
         }
     }
@@ -105,21 +103,19 @@ public class ClientUpdateHandler extends UpdateHandler {
 
                 botState.enter(botContext);
 
-                while(!botState.getIsInputNeeded()) {
+                while (!botState.getIsInputNeeded()) {
                     if (botState.nextState() != null) {
                         botState = botState.nextState();
                         botState.enter(botContext);
-                    }
-                    else {
+                    } else {
                         break;
                     }
                 }
-            }
-            else {
+            } else {
                 botContext = ClientBotContext.of(client, update);
                 botState = client.getClientBotState();
 
-                LOGGER.info("[{0} | {1}] Contact: {2}", chatId, botState, update.getMessage().getContact().getPhoneNumber());
+                LOGGER.info("[" + chatId + " | " + botState + "] Contact: " + update.getMessage().getContact().getPhoneNumber());
 
                 botState.handleContact(botContext);
 
@@ -127,27 +123,69 @@ public class ClientUpdateHandler extends UpdateHandler {
                     if (botState.nextState() != null) {
                         botState = botState.nextState();
                         botState.enter(botContext);
-                    }
-                    else {
+                    } else {
                         break;
                     }
                 } while (!botState.getIsInputNeeded());
             }
-        }
-        catch (ClientBotStateException ex) {
+        } catch (ClientBotStateException ex) {
             botState = ((ClientBotStateException) ex).getExceptionState().rootState();
             botState.enter(botContext);
-        }
-        finally {
+        } finally {
             updateState(user, botState);
         }
 
     }
 
     @Override
-    public void processPhoto(Update update) {
-        // TODO Auto-generated method stub
+    public void processPhoto(Update update) throws ClientBotStateException {
+        final String chatId = update.getMessage().getChatId().toString();
+        ClientBotContext botContext = null;
+        ClientBotState botState = null;
 
+        User user = userService.getByTelegramId(chatId);
+        Client client = user.getClient();
+
+        try {
+            if (client == null) {
+                client = clientService.createClient(user);
+
+                botContext = ClientBotContext.of(client, update);
+                botState = client.getClientBotState();
+
+                botState.enter(botContext);
+
+                while (!botState.getIsInputNeeded()) {
+                    if (botState.nextState() != null) {
+                        botState = botState.nextState();
+                        botState.enter(botContext);
+                    } else {
+                        break;
+                    }
+                }
+            } else {
+                botContext = ClientBotContext.of(client, update);
+                botState = client.getClientBotState();
+
+                LOGGER.info("[" + chatId + " | " + botState + "] Photo: " + update.getMessage().getContact().getPhoneNumber());
+
+                botState.handlePhoto(botContext);
+
+                do {
+                    if (botState.nextState() != null) {
+                        botState = botState.nextState();
+                        botState.enter(botContext);
+                    } else {
+                        break;
+                    }
+                } while (!botState.getIsInputNeeded());
+            }
+        } catch (ClientBotStateException ex) {
+            botState = ((ClientBotStateException) ex).getExceptionState().rootState();
+            botState.enter(botContext);
+        } finally {
+            updateState(user, botState);
+        }
     }
 
     @Override
@@ -168,21 +206,19 @@ public class ClientUpdateHandler extends UpdateHandler {
 
                 botState.enter(botContext);
 
-                while(!botState.getIsInputNeeded()) {
+                while (!botState.getIsInputNeeded()) {
                     if (botState.nextState() != null) {
                         botState = botState.nextState();
                         botState.enter(botContext);
-                    }
-                    else {
+                    } else {
                         break;
                     }
                 }
-            }
-            else {
+            } else {
                 botContext = ClientBotContext.of(client, update);
                 botState = client.getClientBotState();
 
-                LOGGER.info("[{0} | {1}] CallbackQuery: {2}", chatId, botState, update.getCallbackQuery().getData());
+                LOGGER.info("[" + chatId + " | " + botState + "] CallbackQuery: " + update.getCallbackQuery().getData());
 
                 botState.handleCallbackQuery(botContext);
 
@@ -190,18 +226,15 @@ public class ClientUpdateHandler extends UpdateHandler {
                     if (botState.nextState() != null) {
                         botState = botState.nextState();
                         botState.enter(botContext);
-                    }
-                    else {
+                    } else {
                         break;
                     }
                 } while (!botState.getIsInputNeeded());
             }
-        }
-        catch (ClientBotStateException ex) {
+        } catch (ClientBotStateException ex) {
             botState = ((ClientBotStateException) ex).getExceptionState().rootState();
             botState.enter(botContext);
-        }
-        finally {
+        } finally {
             updateState(user, botState);
         }
 
@@ -231,5 +264,5 @@ public class ClientUpdateHandler extends UpdateHandler {
 
     }
 
-    
+
 }
