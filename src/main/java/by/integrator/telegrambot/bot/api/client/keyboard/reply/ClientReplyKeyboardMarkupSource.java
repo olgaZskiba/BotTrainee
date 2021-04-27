@@ -3,6 +3,7 @@ package by.integrator.telegrambot.bot.api.client.keyboard.reply;
 import java.util.ArrayList;
 import java.util.List;
 
+import by.integrator.telegrambot.model.Client;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboard;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
@@ -16,12 +17,13 @@ public class ClientReplyKeyboardMarkupSource extends ReplyKeyboardMarkupSource {
     public static final String WHAT_CAN_BOT = "Что я умею";
     public static final String ASK_QUESTION = "Задать свой вопрос";
     public static final String WEBSITE = "Сайт";
-    public static final String CONTINUE_COMMUNICATION = "Продолжить общение";
+    public static final String CONTINUE_COMMUNICATION = "Хочу больше информации";
     public static final String  SHARE_CONTACT = "Поделиться контактом";
+    public static final String  CREATE_TZ = "Составить ТЗ";
     public static final String  YES = "Все верно";
     public static final String  NO = "Исправить";
 
-    public ReplyKeyboardMarkup getMainMenuKeyboard() {
+    public ReplyKeyboardMarkup getMainMenuKeyboard(Client client) {
         ReplyKeyboardMarkup replyKeyboardMarkup = this.createInstance(true, true, false);
         List<KeyboardRow> keyboardRows = new ArrayList<>();
 
@@ -29,19 +31,24 @@ public class ClientReplyKeyboardMarkupSource extends ReplyKeyboardMarkupSource {
         KeyboardRow firstKeyboardRowTwo = new KeyboardRow();
         KeyboardRow firstKeyboardRowThree = new KeyboardRow();
         KeyboardRow firstKeyboardRowFour = new KeyboardRow();
-        KeyboardRow firstKeyboardRowFive = new KeyboardRow();
+//        KeyboardRow firstKeyboardRowFive = new KeyboardRow();
+        KeyboardRow firstKeyboardRowSix = new KeyboardRow();
 
+        firstKeyboardRowSix.add(new KeyboardButton(CREATE_TZ));
         firstKeyboardRowOne.add(new KeyboardButton(WHAT_IS_THE_BOT));
-        firstKeyboardRowTwo.add(new KeyboardButton(WHAT_CAN_BOT));
-        firstKeyboardRowThree.add(new KeyboardButton(ASK_QUESTION));
-        firstKeyboardRowFour.add(new KeyboardButton(WEBSITE));
-        firstKeyboardRowFive.add(new KeyboardButton(CONTINUE_COMMUNICATION));
+        firstKeyboardRowOne.add(new KeyboardButton(WHAT_CAN_BOT));
+        firstKeyboardRowTwo.add(new KeyboardButton(ASK_QUESTION));
+        firstKeyboardRowThree.add(new KeyboardButton(WEBSITE));
+        firstKeyboardRowFour.add(new KeyboardButton(CONTINUE_COMMUNICATION));
 
+        if (client.getProcessed()) {
+            keyboardRows.add(firstKeyboardRowSix);
+        }
         keyboardRows.add(firstKeyboardRowOne);
         keyboardRows.add(firstKeyboardRowTwo);
         keyboardRows.add(firstKeyboardRowThree);
         keyboardRows.add(firstKeyboardRowFour);
-        keyboardRows.add(firstKeyboardRowFive);
+//        keyboardRows.add(firstKeyboardRowFive);
 
         replyKeyboardMarkup.setKeyboard(keyboardRows);
         return replyKeyboardMarkup;

@@ -17,6 +17,7 @@ public enum Role {
     public static Role parseRole(String input) {
         for (Role role : Role.values()) {
             if (input.endsWith(role.getDeepLink())) {
+                System.out.println(role.getDeepLink());
                 return role;
             }
         }

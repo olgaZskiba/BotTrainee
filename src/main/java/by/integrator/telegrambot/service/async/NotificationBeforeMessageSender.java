@@ -3,15 +3,16 @@ package by.integrator.telegrambot.service.async;
 import by.integrator.telegrambot.bot.api.MessageSender;
 import by.integrator.telegrambot.bot.api.client.service.ClientMessageSource;
 import by.integrator.telegrambot.model.Client;
+import by.integrator.telegrambot.model.Notification;
+import by.integrator.telegrambot.model.enums.NotificationType;
 import by.integrator.telegrambot.service.ClientService;
+import by.integrator.telegrambot.service.NotificationService;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.util.Calendar;
@@ -19,8 +20,8 @@ import java.util.List;
 
 @Service
 @Slf4j
-public class NotificationMessageSender {
-    private final static Logger LOGGER = LoggerFactory.getLogger(NotificationMessageSender.class);
+public class NotificationBeforeMessageSender {
+    private final static Logger LOGGER = LoggerFactory.getLogger(NotificationBeforeMessageSender.class);
 
     @Autowired
     private ClientService clientService;
@@ -28,6 +29,8 @@ public class NotificationMessageSender {
     private MessageSender messageSender;
     @Autowired
     private ClientMessageSource clientMessageSource;
+    @Autowired
+    private NotificationService notificationService;
 
     private Boolean isWorking = false;
 
@@ -42,14 +45,14 @@ public class NotificationMessageSender {
     @Async
 //    @Transactional(propagation = Propagation.REQUIRES_NEW)
     protected void idleMessagesAsync() {
-        LOGGER.info("Notification message service started");
+        LOGGER.info("Notification before consultation message service started");
         while (true) {
             try {
-                log.info("Notification Slipping: " + calculateDifference());
+                log.info("Notification before consultation Slipping: " + calculateDifference());
                 Thread.sleep(calculateDifference());
                 check();
             } catch (InterruptedException ex) {
-                log.info("Profile message service stopped: " + ex.getMessage());
+                log.info("Notification before consultation message service stopped: " + ex.getMessage());
             }
         }
     }
@@ -60,11 +63,11 @@ public class NotificationMessageSender {
         Integer currentHour = calendar.get(Calendar.HOUR_OF_DAY);
         Integer currentMinutes = calendar.get(Calendar.MINUTE);
 
-        if (currentHour <= 15 && currentMinutes < 57) {
+        if (currentHour <= 12 && currentMinutes < 30) {
             Calendar nextCalendar = Calendar.getInstance();
 
-            nextCalendar.set(Calendar.HOUR_OF_DAY, 15);
-            nextCalendar.set(Calendar.MINUTE, 57);
+            nextCalendar.set(Calendar.HOUR_OF_DAY, 12);
+            nextCalendar.set(Calendar.MINUTE, 30);
             nextCalendar.set(Calendar.SECOND, 0);
 
             return nextCalendar.getTimeInMillis() - calendar.getTimeInMillis();
@@ -73,8 +76,8 @@ public class NotificationMessageSender {
         Calendar nextCalendar = Calendar.getInstance();
 
         nextCalendar.add(Calendar.DATE, 1);
-        nextCalendar.set(Calendar.HOUR_OF_DAY, 15);
-        nextCalendar.set(Calendar.MINUTE, 57);
+        nextCalendar.set(Calendar.HOUR_OF_DAY, 12);
+        nextCalendar.set(Calendar.MINUTE, 30);
         nextCalendar.set(Calendar.SECOND, 0);
 
         return nextCalendar.getTimeInMillis() - calendar.getTimeInMillis();
@@ -87,36 +90,30 @@ public class NotificationMessageSender {
                     message, null);
         }
         catch (TelegramApiException ex) {
-            LOGGER.error("Unable to sendNotification to user: " + client.getTelegramId());
+            LOGGER.error("Unable to send notification before consultation to user: " + client.getTelegramId());
         }
     }
 
     @Async
     protected void check() {
-        List<Client> clients = clientService.getByProfileFilledTrue();
+        List<Client> clients = clientService.getByProcessedFalse();
 
         if (!clients.isEmpty()) {
             for (Client client : clients) {
                 String notification = getNotificationByClient(client);
                 if (!notification.equals("")) {
                     sendNotification(client, notification);
-                    int nextDay = client.getDay();
-                    client.setDay(++nextDay);
-                    clientService.save(client);
                 }
             }
         }
     }
 
     private String getNotificationByClient(Client client) {
-        if (client.getDay() == 1) {
-            return clientMessageSource.getMessage("message.postAnonsOne");
-        } else if (client.getDay() == 2) {
-            return clientMessageSource.getMessage("message.postAnonsTwo");
-        } else if (client.getDay() == 3) {
-            return clientMessageSource.getMessage("message.postAnonsThree");
-        } else if (client.getDay() == 4) {
-            return clientMessageSource.getMessage("message.postAnonsFour");
+        List<Notification> notifications = notificationService.getAllByType(NotificationType.BEFORE);
+        if (!notifications.isEmpty()) {
+            if (client.getDay() <= notifications.size()) {
+                return notifications.get(client.getDay()).getText();
+            }
         }
         return "";
     }

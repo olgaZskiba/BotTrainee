@@ -1,11 +1,10 @@
 package by.integrator.telegrambot.model.enums;
 
-import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
-
 public enum BotType {
     TELEGRAM("Telegram"),
     INSTAGRAM("Instagram"),
     VIBER("Viber"),
+    WHATSAPP("WhatsApp"),
     FACEBOOK("Facebook");
 
     private String name;

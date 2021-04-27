@@ -28,7 +28,7 @@ public enum ClientBotState implements BotState<ClientBotState, ClientBotContext>
 
         @Override
         public ClientBotState nextState() {
-            return MainMenu;
+            return Greeting;
         }
 
         @Override
@@ -38,29 +38,11 @@ public enum ClientBotState implements BotState<ClientBotState, ClientBotContext>
 
     },
 
-    AboutBot(false) {
+    Greeting(false) {
         @SneakyThrows
         @Override
         public void enter(ClientBotContext botContext) {
-            clientMessageService.sendAboutBotMessage(botContext);
-        }
-
-        @Override
-        public ClientBotState nextState() {
-            return AnonsOne;
-        }
-
-        @Override
-        public ClientBotState rootState() {
-            return MainMenu;
-        }
-    },
-
-    AnonsOne(false) {
-        @SneakyThrows
-        @Override
-        public void enter(ClientBotContext botContext) {
-            clientMessageService.sendAnonsOneMessage(botContext);
+            clientMessageService.sendStartTwoMessage(botContext);
         }
 
         @Override
@@ -72,6 +54,7 @@ public enum ClientBotState implements BotState<ClientBotState, ClientBotContext>
         public ClientBotState rootState() {
             return MainMenu;
         }
+
     },
 
     MainMenu(true) {
@@ -104,6 +87,10 @@ public enum ClientBotState implements BotState<ClientBotState, ClientBotContext>
                     nextState = Website;
                     break;
                 case ClientReplyKeyboardMarkupSource
+                        .CREATE_TZ:
+                    nextState = CreateTechnicalTask;
+                    break;
+                case ClientReplyKeyboardMarkupSource
                         .CONTINUE_COMMUNICATION:
                     nextState = InputFirstName;
                     break;
@@ -124,13 +111,34 @@ public enum ClientBotState implements BotState<ClientBotState, ClientBotContext>
         }
     },
 
-    WhatIsTheBot(true) {
+    WhatIsTheBot(false) {
         private ClientBotState nextState = null;
 
         @SneakyThrows
         @Override
         public void enter(ClientBotContext botContext) {
             clientMessageService.sendWhatIsTheBotMessage(botContext);
+        }
+
+        @Override
+        public ClientBotState nextState() {
+            return MainMenu;
+        }
+
+        @Override
+        public ClientBotState rootState() {
+            return MainMenu;
+        }
+    },
+
+    CreateTechnicalTask(false) {
+        private ClientBotState nextState = null;
+
+        @SneakyThrows
+        @Override
+        public void enter(ClientBotContext botContext) {
+            clientMessageService.sendLinkToBrif(botContext);
+//            adminMessageService.sendNotificationToAdminAboutNewTz(botContext);
         }
 
         @Override
@@ -161,9 +169,9 @@ public enum ClientBotState implements BotState<ClientBotState, ClientBotContext>
             if (validationResult.getIsValid()) {
                 Client client = clientBotContext.getClient();
                 client.setFirstName(userAnswer);
-
+                client.setFillStarted(true);
                 clientService.save(client);
-                nextState = InputLastName;
+                nextState = WhatProblemsShouldBotSolve;
             } else {
                 clientMessageService.sendInvalidInputMessage(clientBotContext, validationResult.getMessage());
                 nextState = null;
@@ -218,29 +226,49 @@ public enum ClientBotState implements BotState<ClientBotState, ClientBotContext>
         }
     },
 
-    InputLastName(true) {
+    WhatProblemsShouldBotSolve(true) {
         private ClientBotState nextState = null;
 
         @SneakyThrows
         @Override
         public void enter(ClientBotContext botContext) {
-            clientMessageService.sendInputLastNameMessage(botContext);
+            clientMessageService.sendWhatProblemsShouldBotSolve(botContext);
         }
 
         @Override
-        public void handleText(ClientBotContext clientBotContext) {
-            String userAnswer = clientBotContext.getUpdate().getMessage().getText();
-            ValidationResult validationResult = Validator.isSurnameValid(userAnswer);
-
-            if (validationResult.getIsValid()) {
-                Client client = clientBotContext.getClient();
-                client.setLastName(userAnswer);
-
-                clientService.save(client);
-                nextState = InputPhoneNumber;
-            } else {
-                clientMessageService.sendInvalidInputMessage(clientBotContext, validationResult.getMessage());
-                nextState = null;
+        public void handleCallbackQuery(ClientBotContext clientBotContext) {
+            String data = clientBotContext.getUpdate().getCallbackQuery().getData();
+            Client client = clientBotContext.getClient();
+            String currentText = client.getProblem();
+            String tt = "";
+            switch (data) {
+                case "callback.reduce":
+                    tt = clientService.checkProblem(currentText, "\n - Сократить денежные затраты на общение с клиентами;");
+                    client.setProblem(tt);
+                    clientService.save(client);
+                    nextState = WhatProblemsShouldBotSolve;
+                    break;
+                case "callback.optimize":
+                    tt = clientService.checkProblem(currentText, "\n - Оптимизировать работу сотрудников отдела продаж;");
+                    client.setProblem(tt);
+                    nextState = WhatProblemsShouldBotSolve;
+                    break;
+                case "callback.automate":
+                    tt = clientService.checkProblem(currentText, "\n - Автоматизировать процесс продажи;");
+                    client.setProblem(tt);
+                    nextState = WhatProblemsShouldBotSolve;
+                    break;
+                case "callback.increase":
+                    tt = clientService.checkProblem(currentText, "\n - Увеличить до ходимость клиентов до отдела продаж;");
+                    client.setProblem(tt);
+                    nextState = WhatProblemsShouldBotSolve;
+                    break;
+                case "callback.next":
+                    nextState = InputGoals;
+                    break;
+                default:
+                    nextState = WhatProblemsShouldBotSolve;
+                    break;
             }
         }
 
@@ -255,29 +283,153 @@ public enum ClientBotState implements BotState<ClientBotState, ClientBotContext>
         }
     },
 
-    ChangeLastName(true) {
+    InputGoals(true) {
         private ClientBotState nextState = null;
 
         @SneakyThrows
         @Override
         public void enter(ClientBotContext botContext) {
-            clientMessageService.sendInputLastNameMessage(botContext);
+            clientMessageService.sendInputGoals(botContext);
         }
 
         @Override
         public void handleText(ClientBotContext clientBotContext) {
-            String userAnswer = clientBotContext.getUpdate().getMessage().getText();
-            ValidationResult validationResult = Validator.isSurnameValid(userAnswer);
+            Client client = clientBotContext.getClient();
+            client.setGoals(clientBotContext.getUpdate().getMessage().getText());
+            clientService.save(client);
+        }
 
-            if (validationResult.getIsValid()) {
-                Client client = clientBotContext.getClient();
-                client.setLastName(userAnswer);
+        @Override
+        public ClientBotState nextState() {
+            return InputFieldOfActivity;
+        }
 
-                clientService.save(client);
-                nextState = ConfirmFilledProfile;
-            } else {
-                clientMessageService.sendInvalidInputMessage(clientBotContext, validationResult.getMessage());
-                nextState = null;
+        @Override
+        public ClientBotState rootState() {
+            return MainMenu;
+        }
+    },
+
+    ChangeGoals(true) {
+        private ClientBotState nextState = null;
+
+        @SneakyThrows
+        @Override
+        public void enter(ClientBotContext botContext) {
+            clientMessageService.sendInputGoals(botContext);
+        }
+
+        @Override
+        public void handleText(ClientBotContext clientBotContext) {
+            Client client = clientBotContext.getClient();
+            client.setGoals(clientBotContext.getUpdate().getMessage().getText());
+            clientService.save(client);
+        }
+
+        @Override
+        public ClientBotState nextState() {
+            return ConfirmFilledProfile;
+        }
+
+        @Override
+        public ClientBotState rootState() {
+            return MainMenu;
+        }
+    },
+
+    InputFieldOfActivity(true) {
+        private ClientBotState nextState = null;
+
+        @SneakyThrows
+        @Override
+        public void enter(ClientBotContext botContext) {
+            clientMessageService.sendInputFieldOfActivity(botContext);
+        }
+
+        @Override
+        public void handleText(ClientBotContext clientBotContext) {
+            Client client = clientBotContext.getClient();
+            client.setFieldOfActivity(clientBotContext.getUpdate().getMessage().getText());
+            clientService.save(client);
+        }
+
+        @Override
+        public ClientBotState nextState() {
+            return SelectBotType;
+        }
+
+        @Override
+        public ClientBotState rootState() {
+            return MainMenu;
+        }
+    },
+
+    ChangeFieldOfActivity(true) {
+        private ClientBotState nextState = null;
+
+        @SneakyThrows
+        @Override
+        public void enter(ClientBotContext botContext) {
+            clientMessageService.sendInputFieldOfActivity(botContext);
+        }
+
+        @Override
+        public void handleText(ClientBotContext clientBotContext) {
+            Client client = clientBotContext.getClient();
+            client.setFieldOfActivity(clientBotContext.getUpdate().getMessage().getText());
+            clientService.save(client);
+        }
+
+        @Override
+        public ClientBotState nextState() {
+            return ConfirmFilledProfile;
+        }
+
+        @Override
+        public ClientBotState rootState() {
+            return MainMenu;
+        }
+    },
+
+    ChangeWhatProblemsShouldBotSolve(true) {
+        private ClientBotState nextState = null;
+
+        @SneakyThrows
+        @Override
+        public void enter(ClientBotContext botContext) {
+            clientMessageService.sendWhatProblemsShouldBotSolve(botContext);
+        }
+
+        @Override
+        public void handleCallbackQuery(ClientBotContext clientBotContext) {
+            String data = clientBotContext.getUpdate().getCallbackQuery().getData();
+            Client client = clientBotContext.getClient();
+            String currentText = client.getProblem();
+            String tt = "";
+            switch (data) {
+                case "callback.reduce":
+                    client.setProblem(clientService.checkProblem(currentText, "\n - Сократить денежные затраты на общение с клиентами;"));
+                    clientService.save(client);
+                    nextState = ChangeWhatProblemsShouldBotSolve;
+                    break;
+                case "callback.optimize":
+                    client.setProblem(clientService.checkProblem(currentText, "\n - Оптимизировать работу сотрудников отдела продаж;"));
+                    nextState = ChangeWhatProblemsShouldBotSolve;
+                    break;
+                case "callback.automate":
+                    client.setProblem(clientService.checkProblem(currentText, "\n - Автоматизировать процесс продажи;"));
+                    nextState = ChangeWhatProblemsShouldBotSolve;
+                    break;
+                case "callback.increase":
+                    client.setProblem(clientService.checkProblem(currentText, "\n - Увеличить до ходимость клиентов до отдела продаж;"));
+                    nextState = ChangeWhatProblemsShouldBotSolve;
+                    break;
+                case "callback.next":
+                    nextState = ConfirmFilledProfile;
+                    break;
+                default:
+                    nextState = ChangeWhatProblemsShouldBotSolve;
+                    break;
             }
         }
 
@@ -292,35 +444,54 @@ public enum ClientBotState implements BotState<ClientBotState, ClientBotContext>
         }
     },
 
-    InputEmail(true) {
+    ChangeWayCommunication(true) {
         private ClientBotState nextState = null;
 
         @SneakyThrows
         @Override
         public void enter(ClientBotContext botContext) {
-            clientMessageService.sendInputEmailMessage(botContext);
+            clientMessageService.sendWayCommunicationMessage(botContext);
         }
 
         @Override
-        public void handleText(ClientBotContext clientBotContext) {
-            String userAnswer = clientBotContext.getUpdate().getMessage().getText();
-            ValidationResult validationResult = Validator.isEmailValid(userAnswer);
-
-            if (validationResult.getIsValid()) {
-                Client client = clientBotContext.getClient();
-                client.setEmail(userAnswer);
-
-                clientService.save(client);
-                nextState = SelectBotType;
-            } else {
-                clientMessageService.sendInvalidInputMessage(clientBotContext, validationResult.getMessage());
-                nextState = null;
-            }
+        public void handleCallbackQuery(ClientBotContext clientBotContext) {
+            String userAnswer = clientBotContext.getUpdate().getCallbackQuery().getData();
+            Client client = clientBotContext.getClient();
+            client.setWayCommunication(userAnswer);
+            clientService.save(client);
         }
 
         @Override
         public ClientBotState nextState() {
-            return nextState;
+            return ConfirmFilledProfile;
+        }
+
+        @Override
+        public ClientBotState rootState() {
+            return MainMenu;
+        }
+    },
+
+    WayCommunication(true) {
+        private ClientBotState nextState = null;
+
+        @SneakyThrows
+        @Override
+        public void enter(ClientBotContext botContext) {
+            clientMessageService.sendWayCommunicationMessage(botContext);
+        }
+
+        @Override
+        public void handleCallbackQuery(ClientBotContext clientBotContext) {
+            String userAnswer = clientBotContext.getUpdate().getCallbackQuery().getData();
+            Client client = clientBotContext.getClient();
+            client.setWayCommunication(userAnswer);
+            clientService.save(client);
+        }
+
+        @Override
+        public ClientBotState nextState() {
+            return ConfirmFilledProfile;
         }
 
         @Override
@@ -382,7 +553,7 @@ public enum ClientBotState implements BotState<ClientBotState, ClientBotContext>
             client.setPhoneNumber(userAnswer);
 
             clientService.save(client);
-            nextState = InputEmail;
+            nextState = WayCommunication;
         }
 
         @Override
@@ -424,7 +595,7 @@ public enum ClientBotState implements BotState<ClientBotState, ClientBotContext>
                         }
                     }
                 } finally {
-                    nextState = SelectBotType;
+                    nextState = ChangeSelectBotType;
                 }
             }
         }
@@ -455,8 +626,7 @@ public enum ClientBotState implements BotState<ClientBotState, ClientBotContext>
             Client client = clientBotContext.getClient();
 
             if (callbackData.equals("callback.continue")) {
-//                messageSender.deleteBotLastMessage(clientBotContext.getClient().getUser());
-                nextState = ConfirmFilledProfile;
+                nextState = IntegrationToCrm;
             } else {
                 try {
                     Messenger messenger = messengerService.getById(Integer.parseInt(callbackData));
@@ -470,6 +640,140 @@ public enum ClientBotState implements BotState<ClientBotState, ClientBotContext>
                 } finally {
                     nextState = SelectBotType;
                 }
+            }
+        }
+
+        @Override
+        public void handleText(ClientBotContext clientBotContext) {
+            String userAnswer = clientBotContext.getUpdate().getMessage().getText();
+            Client client = clientBotContext.getClient();
+            client.setUserMessenger(userAnswer);
+            clientService.save(client);
+            nextState = IntegrationToCrm;
+        }
+
+        @Override
+        public ClientBotState nextState() {
+            return nextState;
+        }
+
+        @Override
+        public ClientBotState rootState() {
+            return MainMenu;
+        }
+    },
+
+    IntegrationToCrm(true) {
+        private ClientBotState nextState = null;
+
+        @SneakyThrows
+        @Override
+        public void enter(ClientBotContext botContext) {
+            clientMessageService.sendSelectIntegrationToCrm(botContext);
+        }
+
+        @Override
+        public void handleCallbackQuery(ClientBotContext clientBotContext) {
+            String callbackData = clientBotContext.getUpdate().getCallbackQuery().getData();
+            Client client = clientBotContext.getClient();
+            switch (callbackData) {
+                case "callback.yes":
+                    client.setIntegrationToCrm("Да");
+                    clientService.save(client);
+                    nextState = ConfirmationForConsultation;
+                    break;
+                case "callback.no":
+                    client.setIntegrationToCrm("Нет");
+                    clientService.save(client);
+                    nextState = ConfirmationForConsultation;
+                    break;
+                case "callback.dontKnow":
+                    client.setIntegrationToCrm("Я не работал\\ла с CRM-системами");
+                    clientService.save(client);
+                    nextState = ConfirmationForConsultation;
+                    break;
+                default:
+                    nextState = IntegrationToCrm;
+                    break;
+            }
+        }
+
+        @Override
+        public ClientBotState nextState() {
+            return nextState;
+        }
+
+        @Override
+        public ClientBotState rootState() {
+            return MainMenu;
+        }
+    },
+
+    ChangeIntegrationToCrm(true) {
+        private ClientBotState nextState = null;
+
+        @SneakyThrows
+        @Override
+        public void enter(ClientBotContext botContext) {
+            clientMessageService.sendSelectIntegrationToCrm(botContext);
+        }
+
+        @Override
+        public void handleCallbackQuery(ClientBotContext clientBotContext) {
+            String callbackData = clientBotContext.getUpdate().getCallbackQuery().getData();
+            Client client = clientBotContext.getClient();
+            switch (callbackData) {
+                case "callback.yes":
+                    client.setIntegrationToCrm("Да");
+                    clientService.save(client);
+                    nextState = ConfirmFilledProfile;
+                    break;
+                case "callback.not":
+                    client.setIntegrationToCrm("Нет");
+                    clientService.save(client);
+                    nextState = ConfirmFilledProfile;
+                    break;
+                case "callback.dontKnow":
+                    client.setIntegrationToCrm("Я не работал\\ла с CRM-системами");
+                    clientService.save(client);
+                    nextState = ConfirmFilledProfile;
+                    break;
+                default:
+                    nextState = ChangeIntegrationToCrm;
+                    break;
+            }
+        }
+
+        @Override
+        public ClientBotState nextState() {
+            return nextState;
+        }
+
+        @Override
+        public ClientBotState rootState() {
+            return MainMenu;
+        }
+    },
+
+    ConfirmationForConsultation(true) {
+        private ClientBotState nextState = null;
+
+        @SneakyThrows
+        @Override
+        public void enter(ClientBotContext botContext) {
+            clientMessageService.sendConfirmationForConsultation(botContext);
+        }
+
+        @Override
+        public void handleCallbackQuery(ClientBotContext clientBotContext) {
+            String callbackData = clientBotContext.getUpdate().getCallbackQuery().getData();
+            switch (callbackData) {
+                case "callback.consultation":
+                    nextState = InputPhoneNumber;
+                    break;
+                default:
+                    nextState = ConfirmationForConsultation;
+                    break;
             }
         }
 
@@ -534,17 +838,23 @@ public enum ClientBotState implements BotState<ClientBotState, ClientBotContext>
             String callbackData = clientBotContext.getUpdate().getCallbackQuery().getData();
 
             switch (callbackData) {
-                case "callback.lastName":
-                    nextState = ChangeLastName;
+                case "callback.whatProblemsShouldBotSolve":
+                    nextState = ChangeWhatProblemsShouldBotSolve;
                     break;
                 case "callback.firstName":
                     nextState = ChangeFirstName;
                     break;
-                case "callback.email":
-                    nextState = ChangeEmail;
+                case "callback.fieldOfActivity":
+                    nextState = ChangeFieldOfActivity;
                     break;
                 case "callback.messenger":
                     nextState = ChangeSelectBotType;
+                    break;
+                case "callback.wayCommunication":
+                    nextState = ChangeWayCommunication;
+                    break;
+                case "callback.goals":
+                    nextState = ChangeGoals;
                     break;
                 default:
                     nextState = SelectFieldForChange;
@@ -587,7 +897,7 @@ public enum ClientBotState implements BotState<ClientBotState, ClientBotContext>
         }
     },
 
-    Website(true) {
+    Website(false) {
         private ClientBotState nextState = null;
 
         @SneakyThrows
@@ -607,7 +917,7 @@ public enum ClientBotState implements BotState<ClientBotState, ClientBotContext>
         }
     },
 
-    StartAskQuestion(true) {
+    StartAskQuestion(false) {
         private ClientBotState nextState = null;
 
         @SneakyThrows
@@ -722,7 +1032,7 @@ public enum ClientBotState implements BotState<ClientBotState, ClientBotContext>
         }
     },
 
-    WhatCanBot(true) {
+    WhatCanBot(false) {
         private ClientBotState nextState = null;
 
         @SneakyThrows

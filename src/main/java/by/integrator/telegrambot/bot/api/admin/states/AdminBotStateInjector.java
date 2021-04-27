@@ -19,6 +19,7 @@ public class AdminBotStateInjector implements BotStateInjector<AdminBotState, Ad
     @Autowired private AdminService adminService;
     @Autowired private QuestionService questionService;
     @Autowired private PostponeMessageService postponeMessageService;
+    @Autowired private NotificationService notificationService;
 
     @PostConstruct
     @Override
@@ -30,6 +31,7 @@ public class AdminBotStateInjector implements BotStateInjector<AdminBotState, Ad
         AdminBotState.setAdminService(adminService);
         AdminBotState.setQuestionService(questionService);
         AdminBotState.setPostponeMessageService(postponeMessageService);
+        AdminBotState.setNotificationService(notificationService);
     }
 
 }

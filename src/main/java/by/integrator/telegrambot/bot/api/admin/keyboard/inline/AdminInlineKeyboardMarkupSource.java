@@ -1,31 +1,35 @@
 package by.integrator.telegrambot.bot.api.admin.keyboard.inline;
 
 import by.integrator.telegrambot.bot.keyboard.InlineKeyboardMarkupSource;
-import by.integrator.telegrambot.model.Client;
-import by.integrator.telegrambot.model.Messenger;
-import by.integrator.telegrambot.model.PostponeMessage;
-import by.integrator.telegrambot.model.Question;
+import by.integrator.telegrambot.model.*;
 import com.vdurmont.emoji.EmojiParser;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboard;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 public class AdminInlineKeyboardMarkupSource extends InlineKeyboardMarkupSource {
+
+    public final static String FLAME = ":flame:";
 
     public InlineKeyboardMarkup generateClientsMultiplySelectablePageableInlineMarkup(List<Client> clients, Integer page) {
         InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> keyboardRows = new ArrayList<>();
 
+        clients.sort(Comparator.comparing(Client::getProcessed));
+
         for (int i = ((page - 1) * ITEMS_PER_PAGE); i < page * ITEMS_PER_PAGE && i < clients.size(); i++) {
             List<InlineKeyboardButton> buttons = new ArrayList<>();
             InlineKeyboardButton button = new InlineKeyboardButton();
 
-            button.setText(clients.get(i).getLastName() + " " + clients.get(i).getFirstName());
-            button.setCallbackData(clients.get(i).getId().toString());
+            if (!clients.get(i).getProcessed() && clients.get(i).getProfileFilled()) {
+                button.setText("🔥" + clients.get(i).getFirstName() + "🔥");
+                button.setCallbackData(clients.get(i).getId().toString());
+            } else {
+                button.setText(clients.get(i).getFirstName());
+                button.setCallbackData(clients.get(i).getId().toString());
+            }
 
             buttons.add(button);
 
@@ -86,6 +90,40 @@ public class AdminInlineKeyboardMarkupSource extends InlineKeyboardMarkupSource 
         InlineKeyboardButton buttonCancelLoadPicture = new InlineKeyboardButton();
         buttonCancelLoadPicture.setText("Удалить");
         buttonCancelLoadPicture.setCallbackData(postponeMessage.getId().toString());
+
+        List<InlineKeyboardButton> firstKeyboardButtonRow = new ArrayList<>();
+        firstKeyboardButtonRow.add(buttonCancelLoadPicture);
+        keyboardRows.add(firstKeyboardButtonRow);
+
+        inlineKeyboardMarkup.setKeyboard(keyboardRows);
+
+        return inlineKeyboardMarkup;
+    }
+
+    public InlineKeyboardMarkup getDeleteNotificationButton(Notification notification) {
+        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> keyboardRows = new ArrayList<>();
+
+        InlineKeyboardButton buttonCancelLoadPicture = new InlineKeyboardButton();
+        buttonCancelLoadPicture.setText("Удалить");
+        buttonCancelLoadPicture.setCallbackData(notification.getId().toString());
+
+        List<InlineKeyboardButton> firstKeyboardButtonRow = new ArrayList<>();
+        firstKeyboardButtonRow.add(buttonCancelLoadPicture);
+        keyboardRows.add(firstKeyboardButtonRow);
+
+        inlineKeyboardMarkup.setKeyboard(keyboardRows);
+
+        return inlineKeyboardMarkup;
+    }
+
+    public InlineKeyboardMarkup getEditButtonsNotificationMessage(Notification notification) {
+        InlineKeyboardMarkup inlineKeyboardMarkup = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> keyboardRows = new ArrayList<>();
+
+        InlineKeyboardButton buttonCancelLoadPicture = new InlineKeyboardButton();
+        buttonCancelLoadPicture.setText("Изменить");
+        buttonCancelLoadPicture.setCallbackData(notification.getId().toString());
 
         List<InlineKeyboardButton> firstKeyboardButtonRow = new ArrayList<>();
         firstKeyboardButtonRow.add(buttonCancelLoadPicture);

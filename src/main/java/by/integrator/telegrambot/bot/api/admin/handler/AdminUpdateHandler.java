@@ -64,7 +64,7 @@ public class AdminUpdateHandler extends UpdateHandler {
                 botContext = AdminBotContext.of(admin, update);
                 botState = admin.getAdminBotState();
 
-                LOGGER.info("[" + chatId + " | " + botState + "] Text: ", update.getMessage().getText());
+                LOGGER.info("[" + chatId + " | " + botState + "] Text: " + update.getMessage().getText());
 
                 botState.handleText(botContext);
 
@@ -86,14 +86,59 @@ public class AdminUpdateHandler extends UpdateHandler {
     }
 
     @Override
-    public void processContact(Update update) throws ClientBotStateException {
+    public void processContact(Update update) {
 
     }
 
     @Override
-    public void processPhoto(Update update) {
-        // TODO Auto-generated method stub
+    public void processPhoto(Update update) throws AdminBotStateException {
+        final String chatId = update.getMessage().getChatId().toString();
+        AdminBotContext botContext = null;
+        AdminBotState botState = null;
 
+        User user = userService.getByTelegramId(chatId);
+        Admin admin = user.getAdmin();
+
+        try {
+            if (admin == null) {
+                admin = adminService.createAdmin(user);
+
+                botContext = AdminBotContext.of(admin, update);
+                botState = admin.getAdminBotState();
+
+                botState.enter(botContext);
+
+                while (!botState.getIsInputNeeded()) {
+                    if (botState.nextState() != null) {
+                        botState = botState.nextState();
+                        botState.enter(botContext);
+                    } else {
+                        break;
+                    }
+                }
+            } else {
+                botContext = AdminBotContext.of(admin, update);
+                botState = admin.getAdminBotState();
+
+                LOGGER.info("[" + chatId + " | " + botState + "] Photo: " + update.getMessage().getText());
+
+                botState.handlePhoto(botContext);
+
+                do {
+                    if (botState.nextState() != null) {
+                        botState = botState.nextState();
+                        botState.enter(botContext);
+                    } else {
+                        break;
+                    }
+                } while (!botState.getIsInputNeeded());
+            }
+        } catch (AdminBotStateException ex) {
+            botState = ((AdminBotStateException) ex).getExceptionState().rootState();
+            botState.enter(botContext);
+        } finally {
+            updateState(user, botState);
+        }
     }
 
     @Override

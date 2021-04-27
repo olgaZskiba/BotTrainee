@@ -9,4 +9,10 @@ import java.util.List;
 public interface ClientRepository extends JpaRepository<Client, Long> {
     List<Client> findAllByProfileFilledFalse();
     List<Client> findAllByProfileFilledTrue();
+
+    List<Client> findAllByProcessedTrue();
+    List<Client> findAllByProcessedFalse();
+
+    List<Client> findAllByFillStartedTrue();
+    List<Client> findAllByFillStartedFalse();
 }
