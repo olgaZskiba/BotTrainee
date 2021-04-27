@@ -87,6 +87,10 @@ public enum ClientBotState implements BotState<ClientBotState, ClientBotContext>
                     nextState = Website;
                     break;
                 case ClientReplyKeyboardMarkupSource
+                        .CREATE_TZ:
+                    nextState = CreateTechnicalTask;
+                    break;
+                case ClientReplyKeyboardMarkupSource
                         .CONTINUE_COMMUNICATION:
                     nextState = InputFirstName;
                     break;
@@ -127,6 +131,27 @@ public enum ClientBotState implements BotState<ClientBotState, ClientBotContext>
         }
     },
 
+    CreateTechnicalTask(false) {
+        private ClientBotState nextState = null;
+
+        @SneakyThrows
+        @Override
+        public void enter(ClientBotContext botContext) {
+            clientMessageService.sendLinkToBrif(botContext);
+//            adminMessageService.sendNotificationToAdminAboutNewTz(botContext);
+        }
+
+        @Override
+        public ClientBotState nextState() {
+            return MainMenu;
+        }
+
+        @Override
+        public ClientBotState rootState() {
+            return MainMenu;
+        }
+    },
+
     InputFirstName(false) {
         private ClientBotState nextState = null;
 
@@ -144,7 +169,7 @@ public enum ClientBotState implements BotState<ClientBotState, ClientBotContext>
             if (validationResult.getIsValid()) {
                 Client client = clientBotContext.getClient();
                 client.setFirstName(userAnswer);
-
+                client.setFillStarted(true);
                 clientService.save(client);
                 nextState = WhatProblemsShouldBotSolve;
             } else {
@@ -570,7 +595,7 @@ public enum ClientBotState implements BotState<ClientBotState, ClientBotContext>
                         }
                     }
                 } finally {
-                    nextState = SelectBotType;
+                    nextState = ChangeSelectBotType;
                 }
             }
         }
@@ -657,7 +682,7 @@ public enum ClientBotState implements BotState<ClientBotState, ClientBotContext>
                     clientService.save(client);
                     nextState = ConfirmationForConsultation;
                     break;
-                case "callback.not":
+                case "callback.no":
                     client.setIntegrationToCrm("Нет");
                     clientService.save(client);
                     nextState = ConfirmationForConsultation;
@@ -669,6 +694,52 @@ public enum ClientBotState implements BotState<ClientBotState, ClientBotContext>
                     break;
                 default:
                     nextState = IntegrationToCrm;
+                    break;
+            }
+        }
+
+        @Override
+        public ClientBotState nextState() {
+            return nextState;
+        }
+
+        @Override
+        public ClientBotState rootState() {
+            return MainMenu;
+        }
+    },
+
+    ChangeIntegrationToCrm(true) {
+        private ClientBotState nextState = null;
+
+        @SneakyThrows
+        @Override
+        public void enter(ClientBotContext botContext) {
+            clientMessageService.sendSelectIntegrationToCrm(botContext);
+        }
+
+        @Override
+        public void handleCallbackQuery(ClientBotContext clientBotContext) {
+            String callbackData = clientBotContext.getUpdate().getCallbackQuery().getData();
+            Client client = clientBotContext.getClient();
+            switch (callbackData) {
+                case "callback.yes":
+                    client.setIntegrationToCrm("Да");
+                    clientService.save(client);
+                    nextState = ConfirmFilledProfile;
+                    break;
+                case "callback.not":
+                    client.setIntegrationToCrm("Нет");
+                    clientService.save(client);
+                    nextState = ConfirmFilledProfile;
+                    break;
+                case "callback.dontKnow":
+                    client.setIntegrationToCrm("Я не работал\\ла с CRM-системами");
+                    clientService.save(client);
+                    nextState = ConfirmFilledProfile;
+                    break;
+                default:
+                    nextState = ChangeIntegrationToCrm;
                     break;
             }
         }

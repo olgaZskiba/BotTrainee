@@ -64,11 +64,9 @@ public enum AdminBotState implements BotState<AdminBotState, AdminBotContext> {
                 nextState = SettingsPostponeMessage;
             } else if (AdminReplyKeyboardMarkupSource.SETTING_TEXT.equals(userAnswer)) {
                 nextState = SelectTypeNotification;
+            } else if (userAnswer.startsWith(AdminReplyKeyboardMarkupSource.QUESTIONS)) {
+                nextState = ClientQuestions;
             } else {
-                if (userAnswer.startsWith(AdminReplyKeyboardMarkupSource.QUESTIONS)) {
-                    nextState = ClientQuestions;
-                    return;
-                }
                 nextState = MainMenu;
             }
         }
@@ -103,11 +101,9 @@ public enum AdminBotState implements BotState<AdminBotState, AdminBotContext> {
                 nextState = SettingsPostponeMessage;
             } else if (AdminReplyKeyboardMarkupSource.SETTING_TEXT.equals(userAnswer)) {
                 nextState = SelectTypeNotification;
+            } else if (userAnswer.startsWith(AdminReplyKeyboardMarkupSource.QUESTIONS)) {
+                nextState = ClientQuestions;
             } else {
-                if (userAnswer.startsWith(AdminReplyKeyboardMarkupSource.QUESTIONS)) {
-                    nextState = ClientQuestions;
-                    return;
-                }
                 nextState = MainMenu;
             }
         }
@@ -143,7 +139,7 @@ public enum AdminBotState implements BotState<AdminBotState, AdminBotContext> {
                     Client client = clientService.getById(Integer.parseInt(callbackData));
                     if (client != null) {
                         adminBotContext.getAdmin().setCurrentClient(client);
-//                        nextState = ClientProfile;
+                        nextState = ClientProfile;
                     } else {
                         adminMessageService.sendClientNotFoundMessage(adminBotContext);
                     }
@@ -173,6 +169,23 @@ public enum AdminBotState implements BotState<AdminBotState, AdminBotContext> {
         @Override
         public void enter(AdminBotContext botContext) {
             adminMessageService.sendClientProfileMessage(botContext);
+        }
+
+        @SneakyThrows
+        @Override
+        public void handleText(AdminBotContext botContext) {
+            String userAnswer = botContext.getUpdate().getMessage().getText();
+            if (AdminReplyKeyboardMarkupSource.CLIENTS.equals(userAnswer)) {
+                nextState = ClientList;
+            } else if (AdminReplyKeyboardMarkupSource.POSTPONE.equals(userAnswer)) {
+                nextState = SettingsPostponeMessage;
+            } else if (AdminReplyKeyboardMarkupSource.SETTING_TEXT.equals(userAnswer)) {
+                nextState = SelectTypeNotification;
+            } else if (userAnswer.startsWith(AdminReplyKeyboardMarkupSource.QUESTIONS)) {
+                nextState = ClientQuestions;
+            } else {
+                nextState = MainMenu;
+            }
         }
 
         @Override
@@ -207,9 +220,6 @@ public enum AdminBotState implements BotState<AdminBotState, AdminBotContext> {
         @Override
         public void enter(AdminBotContext botContext) {
             adminMessageService.sendClientProcessedMessage(botContext);
-            Client client = botContext.getAdmin().getCurrentClient();
-            client.setProcessed(true);
-            clientService.save(client);
             botContext.getAdmin().setCurrentClient(null);
         }
 
@@ -1083,6 +1093,349 @@ public enum AdminBotState implements BotState<AdminBotState, AdminBotContext> {
         }
     },
 
+    SuccessSaveText(false) {
+        AdminBotState nextState;
+
+        @Override
+        public void enter(AdminBotContext botContext) {
+            adminMessageService.sendSuccessSavedText(botContext);
+        }
+
+        @Override
+        public AdminBotState nextState() {
+            return SelectTypeNotification;
+        }
+
+        @Override
+        public AdminBotState rootState() {
+            return MainMenu;
+        }
+    },
+
+    SettingWhatCanBotText(true) {
+        AdminBotState nextState;
+
+        @Override
+        public void enter(AdminBotContext botContext) {
+            adminMessageService.sendMenuSettingSelectedText(botContext);
+        }
+
+        @Override
+        public void handleText(AdminBotContext botContext) {
+            switch (botContext.getUpdate().getMessage().getText()) {
+                case "Добавить":
+                    List<Notification> notification =
+                            notificationService.getAllByType(NotificationType.WHAT_CAN_BOT);
+                    if (notification.isEmpty()) {
+                        nextState = InputWhatCanBotText;
+                    } else {
+                        nextState = FoundCurrentText;
+                    }
+                    break;
+                case "Изменить":
+                    nextState = ChangeTextWhatCanBot;
+                    break;
+                case "Назад":
+                    nextState = SelectTypeNotification;
+                    break;
+                default:
+                    nextState = MainMenu;
+                    break;
+            }
+        }
+
+        @Override
+        public AdminBotState nextState() {
+            return nextState;
+        }
+
+        @Override
+        public AdminBotState rootState() {
+            return MainMenu;
+        }
+    },
+
+    ChangeTextWhatCanBot(true) {
+        AdminBotState nextState;
+
+        @Override
+        public void enter(AdminBotContext adminBotContext) {
+            adminMessageService.sendChangeTextWhatCanBotText(adminBotContext);
+        }
+
+        @Override
+        public void handleText(AdminBotContext botContext) {
+            String text = botContext.getUpdate().getMessage().getText();
+            List<Notification> notification = notificationService.getAllByType(NotificationType.WHAT_CAN_BOT);
+            if (!notification.isEmpty()) {
+                Notification notificationForChange = notification.get(0);
+                notificationForChange.setText(text);
+                notificationService.save(notificationForChange);
+                nextState = SuccessSaveText;
+            } else {
+                nextState = SelectTypeNotification;
+            }
+        }
+
+        @Override
+        public AdminBotState nextState() {
+            return nextState;
+        }
+
+        @Override
+        public AdminBotState rootState() {
+            return MainMenu;
+        }
+    },
+
+    InputWhatCanBotText(true) {
+        AdminBotState nextState;
+
+        @Override
+        public void enter(AdminBotContext botContext) {
+            adminMessageService.sendInputWhatCanBotText(botContext);
+        }
+
+        @Override
+        public void handleText(AdminBotContext botContext) {
+            notificationService.createNotification(botContext.getUpdate().getMessage().getText(),
+                    NotificationType.WHAT_CAN_BOT);
+        }
+
+        @Override
+        public AdminBotState nextState() {
+            return SelectTypeNotification;
+        }
+
+        @Override
+        public AdminBotState rootState() {
+            return MainMenu;
+        }
+    },
+
+    ChangeTextWhatIsBot(true) {
+        AdminBotState nextState;
+
+        @Override
+        public void enter(AdminBotContext adminBotContext) {
+            adminMessageService.sendChangeTextWhatIsBot(adminBotContext);
+        }
+
+        @Override
+        public void handleText(AdminBotContext botContext) {
+            String text = botContext.getUpdate().getMessage().getText();
+            List<Notification> notification =
+                    notificationService.getAllByType(NotificationType.WHAT_IS_BOT);
+            if (!notification.isEmpty()) {
+                Notification notificationForChange = notification.get(0);
+                notificationForChange.setText(text);
+                notificationService.save(notificationForChange);
+                nextState = SuccessSaveText;
+            } else {
+                nextState = SelectTypeNotification;
+            }
+        }
+
+        @Override
+        public AdminBotState nextState() {
+            return nextState;
+        }
+
+        @Override
+        public AdminBotState rootState() {
+            return MainMenu;
+        }
+    },
+
+    InputWhatIsBotText(true) {
+        AdminBotState nextState;
+
+        @Override
+        public void enter(AdminBotContext botContext) {
+            adminMessageService.sendInputWhatIsBotText(botContext);
+        }
+
+        @Override
+        public void handleText(AdminBotContext botContext) {
+            notificationService.createNotification(botContext.getUpdate().getMessage().getText(),
+                    NotificationType.WHAT_IS_BOT);
+        }
+
+        @Override
+        public AdminBotState nextState() {
+            return SelectTypeNotification;
+        }
+
+        @Override
+        public AdminBotState rootState() {
+            return MainMenu;
+        }
+    },
+
+    SettingWhatIsBotText(true) {
+        AdminBotState nextState;
+
+        @Override
+        public void enter(AdminBotContext botContext) {
+            adminMessageService.sendMenuSettingSelectedText(botContext);
+        }
+
+        @Override
+        public void handleText(AdminBotContext botContext) {
+            switch (botContext.getUpdate().getMessage().getText()) {
+                case "Добавить":
+                    List<Notification> notification =
+                            notificationService.getAllByType(NotificationType.WHAT_IS_BOT);
+                    if (notification.isEmpty()) {
+                        nextState = InputWhatIsBotText;
+                    } else {
+                        nextState = FoundCurrentText;
+                    }
+                    break;
+                case "Изменить":
+                    nextState = ChangeTextWhatIsBot;
+                    break;
+                case "Назад":
+                    nextState = SelectTypeNotification;
+                    break;
+                default:
+                    nextState = MainMenu;
+                    break;
+            }
+        }
+
+        @Override
+        public AdminBotState nextState() {
+            return nextState;
+        }
+
+        @Override
+        public AdminBotState rootState() {
+            return MainMenu;
+        }
+    },
+
+    ChangeTextWebsite(true) {
+        AdminBotState nextState;
+
+        @Override
+        public void enter(AdminBotContext adminBotContext) {
+            adminMessageService.sendChangeTextWebsite(adminBotContext);
+        }
+
+        @Override
+        public void handleText(AdminBotContext botContext) {
+            String text = botContext.getUpdate().getMessage().getText();
+            List<Notification> notification =
+                    notificationService.getAllByType(NotificationType.WEBSITE);
+            if (!notification.isEmpty()) {
+                Notification notificationForChange = notification.get(0);
+                notificationForChange.setText(text);
+                notificationService.save(notificationForChange);
+                nextState = SuccessSaveText;
+            } else {
+                nextState = SelectTypeNotification;
+            }
+        }
+
+        @Override
+        public AdminBotState nextState() {
+            return nextState;
+        }
+
+        @Override
+        public AdminBotState rootState() {
+            return MainMenu;
+        }
+    },
+
+    InputWebsiteText(true) {
+        AdminBotState nextState;
+
+        @Override
+        public void enter(AdminBotContext botContext) {
+            adminMessageService.sendInputWebsiteText(botContext);
+        }
+
+        @Override
+        public void handleText(AdminBotContext botContext) {
+            notificationService.createNotification(botContext.getUpdate().getMessage().getText(),
+                    NotificationType.WEBSITE);
+        }
+
+        @Override
+        public AdminBotState nextState() {
+            return SelectTypeNotification;
+        }
+
+        @Override
+        public AdminBotState rootState() {
+            return MainMenu;
+        }
+    },
+
+    SettingWebsiteText(true) {
+        AdminBotState nextState;
+
+        @Override
+        public void enter(AdminBotContext botContext) {
+            adminMessageService.sendMenuSettingSelectedText(botContext);
+        }
+
+        @Override
+        public void handleText(AdminBotContext botContext) {
+            switch (botContext.getUpdate().getMessage().getText()) {
+                case "Добавить":
+                    List<Notification> notification =
+                            notificationService.getAllByType(NotificationType.WEBSITE);
+                    if (notification.isEmpty()) {
+                        nextState = InputWebsiteText;
+                    } else {
+                        nextState = FoundCurrentText;
+                    }
+                    break;
+                case "Изменить":
+                    nextState = ChangeTextWebsite;
+                    break;
+                case "Назад":
+                    nextState = SelectTypeNotification;
+                    break;
+                default:
+                    nextState = MainMenu;
+                    break;
+            }
+        }
+
+        @Override
+        public AdminBotState nextState() {
+            return nextState;
+        }
+
+        @Override
+        public AdminBotState rootState() {
+            return MainMenu;
+        }
+    },
+
+    FoundCurrentText(false) {
+        AdminBotState nextState;
+
+        @Override
+        public void enter(AdminBotContext botContext) {
+            adminMessageService.sendMessageFoundText(botContext);
+        }
+
+        @Override
+        public AdminBotState nextState() {
+            return SelectTypeNotification;
+        }
+
+        @Override
+        public AdminBotState rootState() {
+            return MainMenu;
+        }
+    },
+
     SelectTypeNotification(true) {
         AdminBotState nextState;
 
@@ -1100,8 +1453,20 @@ public enum AdminBotState implements BotState<AdminBotState, AdminBotContext> {
                 case AdminReplyKeyboardMarkupSource.AFTER_CONSULTATION:
                     nextState = SettingNotificationAfterConsultation;
                     break;
-                default:
+                case AdminReplyKeyboardMarkupSource.WHAT_IS_BOT:
+                    nextState = SettingWhatIsBotText;
+                    break;
+                case AdminReplyKeyboardMarkupSource.WHAT_CAN_BOT:
+                    nextState = SettingWhatCanBotText;
+                    break;
+                case AdminReplyKeyboardMarkupSource.WEBSITE:
+                    nextState = SettingWebsiteText;
+                    break;
+                case AdminReplyKeyboardMarkupSource.BACK:
                     nextState = MainMenu;
+                    break;
+                default:
+                    nextState = SelectTypeNotification;
                     break;
             }
         }

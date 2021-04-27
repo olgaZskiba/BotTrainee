@@ -4,7 +4,11 @@ import lombok.Getter;
 
 public enum NotificationType {
     BEFORE("До консультации"),
-    AFTER("После консультации");
+    AFTER("После консультации"),
+
+    WHAT_CAN_BOT("Что может бот"),
+    WHAT_IS_BOT("Что такое бот"),
+    WEBSITE("Сайт");
 
     @Getter
     private String type;

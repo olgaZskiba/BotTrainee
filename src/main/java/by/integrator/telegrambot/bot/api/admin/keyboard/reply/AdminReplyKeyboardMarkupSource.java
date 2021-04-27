@@ -20,6 +20,10 @@ public class AdminReplyKeyboardMarkupSource extends ReplyKeyboardMarkupSource {
     public static final String SETTING_TEXT = "Упраление текстами";
     public static final String BEFORE_CONSULTATION = "До консультации";
     public static final String AFTER_CONSULTATION = "После консультации";
+    public static final String WHAT_CAN_BOT = "Что может бот";
+    public static final String WHAT_IS_BOT = "Что такое бот";
+    public static final String WEBSITE = "Сайт";
+    public static final String BACK = "Назад";
 
     public static final String YES = "Все верно";
     public static final String NO = "Исправить";
@@ -114,14 +118,23 @@ public class AdminReplyKeyboardMarkupSource extends ReplyKeyboardMarkupSource {
 
         KeyboardRow KeyboardRowOne = new KeyboardRow();
         KeyboardRow KeyboardRowTwo = new KeyboardRow();
+        KeyboardRow KeyboardRowFour = new KeyboardRow();
+        KeyboardRow KeyboardRowFive = new KeyboardRow();
+        KeyboardRow KeyboardRowSix = new KeyboardRow();
         KeyboardRow KeyboardRowThree = new KeyboardRow();
 
-        KeyboardRowOne.add(new KeyboardButton("До консультации"));
-        KeyboardRowTwo.add(new KeyboardButton("После консультации"));
-        KeyboardRowThree.add(new KeyboardButton("Назад"));
+        KeyboardRowOne.add(new KeyboardButton(BEFORE_CONSULTATION));
+        KeyboardRowTwo.add(new KeyboardButton(AFTER_CONSULTATION));
+        KeyboardRowFour.add(new KeyboardButton(WHAT_CAN_BOT));
+        KeyboardRowFive.add(new KeyboardButton(WHAT_IS_BOT));
+        KeyboardRowSix.add(new KeyboardButton(WEBSITE));
+        KeyboardRowThree.add(new KeyboardButton(BACK));
 
         keyboardRows.add(KeyboardRowOne);
         keyboardRows.add(KeyboardRowTwo);
+        keyboardRows.add(KeyboardRowFour);
+        keyboardRows.add(KeyboardRowFive);
+        keyboardRows.add(KeyboardRowSix);
         keyboardRows.add(KeyboardRowThree);
 
         replyKeyboardMarkup.setKeyboard(keyboardRows);
@@ -143,6 +156,31 @@ public class AdminReplyKeyboardMarkupSource extends ReplyKeyboardMarkupSource {
 
         KeyboardRowOne.add(new KeyboardButton("Добавить"));
         KeyboardRowTwo.add(new KeyboardButton("Удалить"));
+        KeyboardRowTwo.add(new KeyboardButton("Изменить"));
+        KeyboardRowThree.add(new KeyboardButton("Главное меню"));
+
+        keyboardRows.add(KeyboardRowOne);
+        keyboardRows.add(KeyboardRowTwo);
+        keyboardRows.add(KeyboardRowThree);
+
+        replyKeyboardMarkup.setKeyboard(keyboardRows);
+
+        return replyKeyboardMarkup;
+    }
+
+    public ReplyKeyboard getMenuSettingSelectedText() {
+        final ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup();
+        replyKeyboardMarkup.setSelective(true);
+        replyKeyboardMarkup.setResizeKeyboard(true);
+        replyKeyboardMarkup.setOneTimeKeyboard(true);
+
+        List<KeyboardRow> keyboardRows = new ArrayList<>();
+
+        KeyboardRow KeyboardRowOne = new KeyboardRow();
+        KeyboardRow KeyboardRowTwo = new KeyboardRow();
+        KeyboardRow KeyboardRowThree = new KeyboardRow();
+
+        KeyboardRowOne.add(new KeyboardButton("Добавить"));
         KeyboardRowTwo.add(new KeyboardButton("Изменить"));
         KeyboardRowThree.add(new KeyboardButton("Главное меню"));
 

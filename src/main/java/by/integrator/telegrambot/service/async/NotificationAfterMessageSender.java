@@ -63,10 +63,10 @@ public class NotificationAfterMessageSender {
         Integer currentHour = calendar.get(Calendar.HOUR_OF_DAY);
         Integer currentMinutes = calendar.get(Calendar.MINUTE);
 
-        if (currentHour <= 11 && currentMinutes < 30) {
+        if (currentHour <= 13 && currentMinutes < 30) {
             Calendar nextCalendar = Calendar.getInstance();
 
-            nextCalendar.set(Calendar.HOUR_OF_DAY, 11);
+            nextCalendar.set(Calendar.HOUR_OF_DAY, 13);
             nextCalendar.set(Calendar.MINUTE, 30);
             nextCalendar.set(Calendar.SECOND, 0);
 
@@ -76,7 +76,7 @@ public class NotificationAfterMessageSender {
         Calendar nextCalendar = Calendar.getInstance();
 
         nextCalendar.add(Calendar.DATE, 1);
-        nextCalendar.set(Calendar.HOUR_OF_DAY, 11);
+        nextCalendar.set(Calendar.HOUR_OF_DAY, 13);
         nextCalendar.set(Calendar.MINUTE, 30);
         nextCalendar.set(Calendar.SECOND, 0);
 

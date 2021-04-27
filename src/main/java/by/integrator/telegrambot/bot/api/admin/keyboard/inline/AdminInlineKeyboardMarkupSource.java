@@ -23,7 +23,7 @@ public class AdminInlineKeyboardMarkupSource extends InlineKeyboardMarkupSource 
             List<InlineKeyboardButton> buttons = new ArrayList<>();
             InlineKeyboardButton button = new InlineKeyboardButton();
 
-            if (!clients.get(i).getProcessed()) {
+            if (!clients.get(i).getProcessed() && clients.get(i).getProfileFilled()) {
                 button.setText("🔥" + clients.get(i).getFirstName() + "🔥");
                 button.setCallbackData(clients.get(i).getId().toString());
             } else {

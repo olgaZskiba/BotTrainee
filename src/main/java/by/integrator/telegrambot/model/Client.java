@@ -72,6 +72,9 @@ public class Client {
     @Column(name = "processed", columnDefinition = "TINYINT(0)")
     private Boolean processed;
 
+    @Column(name = "fillStarted", columnDefinition = "TINYINT(0)")
+    private Boolean fillStarted;
+
     @EqualsAndHashCode.Exclude
     @ToString.Exclude
     @OneToOne(mappedBy = "client", cascade = CascadeType.ALL)

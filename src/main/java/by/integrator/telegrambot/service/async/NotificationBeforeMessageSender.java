@@ -103,9 +103,6 @@ public class NotificationBeforeMessageSender {
                 String notification = getNotificationByClient(client);
                 if (!notification.equals("")) {
                     sendNotification(client, notification);
-                    int nextDay = client.getDay();
-                    client.setDay(++nextDay);
-                    clientService.save(client);
                 }
             }
         }

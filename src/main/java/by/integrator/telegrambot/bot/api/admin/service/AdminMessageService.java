@@ -117,7 +117,7 @@ public class AdminMessageService extends MessageService {
                 messageSender.sendMessage(admin.getTelegramId(),
                         adminMessageSource.getMessage("message.notificationAboutNewClient", client.getFirstName(),
                                 client.getGoals(), client.getFieldOfActivity(), messengerService.getClientMessengerList(client),
-                                client.getIntegrationToCrm(), client.getEmail(), client.getPhoneNumber()), null);
+                                client.getIntegrationToCrm(), client.getEmail(), client.getPhoneNumber(), client.getWayCommunication()), null);
             }
         }
     }
@@ -183,11 +183,18 @@ public class AdminMessageService extends MessageService {
             messageSender.deleteBotLastMessage(admin.getUser());
         }
         try {
-            Message message = messageSender.sendMessage(admin.getTelegramId(), adminMessageSource.getMessage("message.clientProfile", client.getFirstName(),
+            String text = adminMessageSource.getMessage("message.clientProfile", client.getFirstName(),
                     client.getGoals(), client.getFieldOfActivity(), messengerService.getClientMessengerList(client),
-                    client.getIntegrationToCrm(), client.getEmail(), client.getPhoneNumber()),
-                    adminInlineKeyboardMarkupSource.getProcessedInlineButton());
-
+                    client.getIntegrationToCrm(), client.getEmail(), client.getPhoneNumber(), client.getWayCommunication());
+            text = text.replaceAll("null", "не заполнено");
+            Message message = null;
+            if (client.getProfileFilled()) {
+                message = messageSender.sendMessage(admin.getTelegramId(), text,
+                        adminInlineKeyboardMarkupSource.getProcessedInlineButton());
+            } else {
+                message = messageSender.sendMessage(admin.getTelegramId(), text,
+                        null);
+            }
             updateLastBotMessage(admin.getUser(), message);
         } catch (TelegramApiException ex) {
             LOGGER.error("Unable to sendClientProfileMessage to user: " + admin.getTelegramId() + ", reason: " + ex.getLocalizedMessage());
@@ -233,6 +240,9 @@ public class AdminMessageService extends MessageService {
     @SneakyThrows
     public void sendClientProcessedMessage(AdminBotContext adminBotContext) {
         Admin admin = adminBotContext.getAdmin();
+        Client client = adminBotContext.getAdmin().getCurrentClient();
+        client.setProcessed(true);
+        clientService.save(client);
 
         if (admin == null) throw new AdminNotFoundException();
 
@@ -624,6 +634,26 @@ public class AdminMessageService extends MessageService {
     }
 
     @SneakyThrows
+    public void sendMenuSettingSelectedText(AdminBotContext adminBotContext) {
+        Admin admin = adminBotContext.getAdmin();
+
+        if (admin == null) throw new AdminNotFoundException();
+
+        if (checkEditableMessage(adminBotContext)) {
+            messageSender.deleteBotLastMessage(admin.getUser());
+        }
+        try {
+            Message message = messageSender.sendMessage(admin.getTelegramId(),
+                    adminMessageSource.getMessage("message.settingSelectedNotification"),
+                    adminReplyKeyboardMarkupSource.getMenuSettingSelectedText());
+
+            updateLastBotMessage(admin.getUser(), message);
+        } catch (TelegramApiException ex) {
+            LOGGER.error("Unable to sendMenuSettingSelectedNotification to user: " + admin.getTelegramId() + ", reason: " + ex.getLocalizedMessage());
+        }
+    }
+
+    @SneakyThrows
     public void sendInputNotificationBeforeConsultation(AdminBotContext adminBotContext) {
         Admin admin = adminBotContext.getAdmin();
 
@@ -951,4 +981,201 @@ public class AdminMessageService extends MessageService {
             LOGGER.error("Unable to sendSuccessDeletedNotificationAfterConsultation to user: " + admin.getTelegramId() + ", reason: " + ex.getLocalizedMessage());
         }
     }
+
+    @SneakyThrows
+    public void sendInputWhatCanBotText(AdminBotContext adminBotContext) {
+        Admin admin = adminBotContext.getAdmin();
+
+        if (admin == null) throw new AdminNotFoundException();
+
+        if (checkEditableMessage(adminBotContext)) {
+            messageSender.deleteBotLastMessage(admin.getUser());
+        }
+        try {
+            Message message = messageSender.sendMessage(admin.getTelegramId(),
+                    adminMessageSource.getMessage("message.InputWhatCanBotText"),
+                    null);
+            updateLastBotMessage(admin.getUser(), message);
+        } catch (TelegramApiException ex) {
+            LOGGER.error("Unable to sendInputWhatCanBotText to user: " + admin.getTelegramId() + ", reason: " + ex.getLocalizedMessage());
+        }
+    }
+
+    @SneakyThrows
+    public void sendSuccessSavedText(AdminBotContext adminBotContext) {
+        Admin admin = adminBotContext.getAdmin();
+
+        if (admin == null) throw new AdminNotFoundException();
+
+        if (checkEditableMessage(adminBotContext)) {
+            messageSender.deleteBotLastMessage(admin.getUser());
+        }
+        try {
+            Message message = messageSender.sendMessage(admin.getTelegramId(),
+                    adminMessageSource.getMessage("message.successSavedText"),
+                    null);
+
+            updateLastBotMessage(admin.getUser(), message);
+        } catch (TelegramApiException ex) {
+            LOGGER.error("Unable to sendSuccessSavedText to user: " + admin.getTelegramId() + ", reason: " + ex.getLocalizedMessage());
+        }
+    }
+
+    @SneakyThrows
+    public void sendChangeTextWhatCanBotText(AdminBotContext adminBotContext) {
+        Admin admin = adminBotContext.getAdmin();
+
+        if (admin == null) throw new AdminNotFoundException();
+
+        if (checkEditableMessage(adminBotContext)) {
+            messageSender.deleteBotLastMessage(admin.getUser());
+        }
+        try {
+            List<Notification> notification = notificationService.getAllByType(NotificationType.WHAT_CAN_BOT);
+            if (!notification.isEmpty()) {
+                Message message = messageSender.sendMessage(admin.getTelegramId(),
+                        adminMessageSource.getMessage("message.ChangeTextWhatCanBotText",
+                                notification.get(0).getText()),
+                        null);
+                updateLastBotMessage(admin.getUser(), message);
+            } else {
+                Message message = messageSender.sendMessage(admin.getTelegramId(),
+                        adminMessageSource.getMessage("message.WhatCanBotTextIsEmpty"),
+                        null);
+                updateLastBotMessage(admin.getUser(), message);
+            }
+        } catch (TelegramApiException ex) {
+            LOGGER.error("Unable to sendChangeTextWhatCanBotText to user: " + admin.getTelegramId() + ", reason: " + ex.getLocalizedMessage());
+        }
+    }
+
+    @SneakyThrows
+    public void sendInputWhatIsBotText(AdminBotContext adminBotContext) {
+        Admin admin = adminBotContext.getAdmin();
+
+        if (admin == null) throw new AdminNotFoundException();
+
+        if (checkEditableMessage(adminBotContext)) {
+            messageSender.deleteBotLastMessage(admin.getUser());
+        }
+        try {
+            Message message = messageSender.sendMessage(admin.getTelegramId(),
+                    adminMessageSource.getMessage("message.InputWhatIsBotText"),
+                    null);
+
+            updateLastBotMessage(admin.getUser(), message);
+        } catch (TelegramApiException ex) {
+            LOGGER.error("Unable to sendInputWhatIsBotText to user: " + admin.getTelegramId() + ", reason: " + ex.getLocalizedMessage());
+        }
+    }
+
+    @SneakyThrows
+    public void sendChangeTextWhatIsBot(AdminBotContext adminBotContext) {
+        Admin admin = adminBotContext.getAdmin();
+
+        if (admin == null) throw new AdminNotFoundException();
+
+        if (checkEditableMessage(adminBotContext)) {
+            messageSender.deleteBotLastMessage(admin.getUser());
+        }
+        try {
+            List<Notification> notification =
+                    notificationService.getAllByType(NotificationType.WHAT_IS_BOT);
+            if (!notification.isEmpty()) {
+                Message message = messageSender.sendMessage(admin.getTelegramId(),
+                        adminMessageSource.getMessage("message.ChangeTextWhatIsBot",
+                                notification.get(0).getText()),
+                        null);
+                updateLastBotMessage(admin.getUser(), message);
+            } else {
+                Message message = messageSender.sendMessage(admin.getTelegramId(),
+                        adminMessageSource.getMessage("message.WhatIsBotTextIsEmpty"),
+                        null);
+                updateLastBotMessage(admin.getUser(), message);
+            }
+        } catch (TelegramApiException ex) {
+            LOGGER.error("Unable to sendChangeTextWhatIsBot to user: " + admin.getTelegramId() + ", reason: " + ex.getLocalizedMessage());
+        }
+    }
+
+    @SneakyThrows
+    public void sendInputWebsiteText(AdminBotContext adminBotContext) {
+        Admin admin = adminBotContext.getAdmin();
+
+        if (admin == null) throw new AdminNotFoundException();
+
+        if (checkEditableMessage(adminBotContext)) {
+            messageSender.deleteBotLastMessage(admin.getUser());
+        }
+        try {
+            Message message = messageSender.sendMessage(admin.getTelegramId(),
+                    adminMessageSource.getMessage("message.InputWebsiteText"),
+                    null);
+            updateLastBotMessage(admin.getUser(), message);
+        } catch (TelegramApiException ex) {
+            LOGGER.error("Unable to sendInputInputWebsiteText to user: " + admin.getTelegramId() + ", reason: " + ex.getLocalizedMessage());
+        }
+    }
+
+    @SneakyThrows
+    public void sendMessageFoundText(AdminBotContext adminBotContext) {
+        Admin admin = adminBotContext.getAdmin();
+
+        if (admin == null) throw new AdminNotFoundException();
+
+        if (checkEditableMessage(adminBotContext)) {
+            messageSender.deleteBotLastMessage(admin.getUser());
+        }
+        try {
+            Message message = messageSender.sendMessage(admin.getTelegramId(),
+                    adminMessageSource.getMessage("message.MessageFoundText"),
+                    null);
+
+            updateLastBotMessage(admin.getUser(), message);
+        } catch (TelegramApiException ex) {
+            LOGGER.error("Unable to sendMessageFoundText to user: " + admin.getTelegramId() + ", reason: " + ex.getLocalizedMessage());
+        }
+    }
+
+    @SneakyThrows
+    public void sendChangeTextWebsite(AdminBotContext adminBotContext) {
+        Admin admin = adminBotContext.getAdmin();
+
+        if (admin == null) throw new AdminNotFoundException();
+
+        if (checkEditableMessage(adminBotContext)) {
+            messageSender.deleteBotLastMessage(admin.getUser());
+        }
+        try {
+            List<Notification> notification =
+                    notificationService.getAllByType(NotificationType.WEBSITE);
+            if (!notification.isEmpty()) {
+                Message message = messageSender.sendMessage(admin.getTelegramId(),
+                        adminMessageSource.getMessage("message.ChangeTextWebsite",
+                                notification.get(0).getText()),
+                        null);
+                updateLastBotMessage(admin.getUser(), message);
+            } else {
+                Message message = messageSender.sendMessage(admin.getTelegramId(),
+                        adminMessageSource.getMessage("message.WebsiteTextIsEmpty"),
+                        null);
+                updateLastBotMessage(admin.getUser(), message);
+            }
+        } catch (TelegramApiException ex) {
+            LOGGER.error("Unable to sendChangeTextWebsite to user: " + admin.getTelegramId() + ", reason: " + ex.getLocalizedMessage());
+        }
+    }
+
+//    @SneakyThrows
+//    public void sendNotificationToAdminAboutNewTz(ClientBotContext clientBotContext) {
+//        List<Admin> admins = adminService.getAll();
+//        if (!admins.isEmpty()) {
+//            Client client = clientBotContext.getClient();
+//            for (Admin admin : admins) {
+//                messageSender.sendMessage(admin.getTelegramId(),
+//                        adminMessageSource.getMessage("message.newNotificationClientTz", client.getFirstName()),
+//                        adminReplyKeyboardMarkupSource.getMainMenuKeyboard());
+//            }
+//        }
+//    }
 }

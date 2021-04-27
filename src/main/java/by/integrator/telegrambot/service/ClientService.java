@@ -44,6 +44,7 @@ public class ClientService {
                 .user(user)
                 .profileFilled(false)
                 .processed(false)
+                .fillStarted(false)
                 .problem("")
                 .day(1)
                 .build();
@@ -77,6 +78,17 @@ public class ClientService {
     public List<Client> getByProcessedTrue() {
         return clientRepository.findAllByProcessedTrue();
     }
+
+    @Transactional
+    public List<Client> getByFillStartedFalse() {
+        return clientRepository.findAllByFillStartedFalse();
+    }
+
+    @Transactional
+    public List<Client> getByFillStartedTrue() {
+        return clientRepository.findAllByFillStartedTrue();
+    }
+
 
     public Integer countAllClients() {
         return clientRepository.findAll().size();

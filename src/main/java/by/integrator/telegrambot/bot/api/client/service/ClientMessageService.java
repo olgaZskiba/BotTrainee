@@ -2,7 +2,10 @@ package by.integrator.telegrambot.bot.api.client.service;
 
 import by.integrator.telegrambot.bot.api.client.keyboard.inline.ClientInlineKeyboardMarkupSource;
 import by.integrator.telegrambot.model.Messenger;
+import by.integrator.telegrambot.model.Notification;
+import by.integrator.telegrambot.model.enums.NotificationType;
 import by.integrator.telegrambot.service.MessengerService;
+import by.integrator.telegrambot.service.NotificationService;
 import lombok.SneakyThrows;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,6 +44,8 @@ public class ClientMessageService extends MessageService {
     private ClientInlineKeyboardMarkupSource clientInlineKeyboardMarkupSource;
     @Autowired
     private MessengerService messengerService;
+    @Autowired
+    private NotificationService notificationService;
 
     @SneakyThrows
     private Boolean checkCallbackQuery(ClientBotContext clientBotContext) {
@@ -154,6 +159,13 @@ public class ClientMessageService extends MessageService {
 
     public void sendWhatIsTheBotMessage(ClientBotContext clientBotContext) throws ClientNotFoundException {
         Client client = clientBotContext.getClient();
+        String messageText = "";
+        List<Notification> notifications = notificationService.getAllByType(NotificationType.WHAT_IS_BOT);
+        if (!notifications.isEmpty()) {
+            messageText = notifications.get(0).getText();
+        } else {
+            messageText = clientMessageSource.getMessage("message.WhatIsTheBot");
+        }
 
         if (client == null) throw new ClientNotFoundException();
 
@@ -161,7 +173,7 @@ public class ClientMessageService extends MessageService {
 
         } else {
             try {
-                Message message = messageSender.sendMessage(client.getTelegramId(), clientMessageSource.getMessage("message.WhatIsTheBot"),
+                Message message = messageSender.sendMessage(client.getTelegramId(), messageText,
                         null);
 
                 updateLastBotMessage(client.getUser(), message);
@@ -173,6 +185,14 @@ public class ClientMessageService extends MessageService {
 
     public void sendWhatCanBotMessage(ClientBotContext clientBotContext) throws ClientNotFoundException {
         Client client = clientBotContext.getClient();
+        String messageText = "";
+        List<Notification> notifications =
+                notificationService.getAllByType(NotificationType.WHAT_CAN_BOT);
+        if (!notifications.isEmpty()) {
+            messageText = notifications.get(0).getText();
+        } else {
+            messageText = clientMessageSource.getMessage("message.WhatCanTheBot");
+        }
 
         if (client == null) throw new ClientNotFoundException();
 
@@ -180,7 +200,8 @@ public class ClientMessageService extends MessageService {
 
         } else {
             try {
-                Message message = messageSender.sendMessage(client.getTelegramId(), clientMessageSource.getMessage("message.WhatIsTheBot"),
+                Message message = messageSender.sendMessage(client.getTelegramId(),
+                        messageText,
                         null);
 
                 updateLastBotMessage(client.getUser(), message);
@@ -200,8 +221,10 @@ public class ClientMessageService extends MessageService {
             messageSender.deleteBotLastMessage(client.getUser());
         }
         try {
+            ReplyKeyboardRemove replyKeyboardRemove = new ReplyKeyboardRemove();
+            replyKeyboardRemove.setRemoveKeyboard(true);
             Message message = messageSender.sendMessage(client.getTelegramId(), clientMessageSource.getMessage("message.firstName"),
-                    null);
+                    replyKeyboardRemove);
 
             updateLastBotMessage(client.getUser(), message);
         } catch (TelegramApiException ex) {
@@ -353,13 +376,22 @@ public class ClientMessageService extends MessageService {
     public void sendWebsiteMessage(ClientBotContext clientBotContext) throws ClientNotFoundException {
         Client client = clientBotContext.getClient();
 
+        String messageText = "";
+        List<Notification> notifications = notificationService.getAllByType(NotificationType.WHAT_IS_BOT);
+        if (!notifications.isEmpty()) {
+            messageText = notifications.get(0).getText();
+        } else {
+            messageText = clientMessageSource.getMessage("message.website");
+        }
+
         if (client == null) throw new ClientNotFoundException();
 
         if (checkEditableMessage(clientBotContext)) {
 
         } else {
             try {
-                Message message = messageSender.sendMessage(client.getTelegramId(), clientMessageSource.getMessage("message.website"),
+                Message message = messageSender.sendMessage(client.getTelegramId(),
+                        messageText,
                         null);
 
                 updateLastBotMessage(client.getUser(), message);
@@ -579,6 +611,26 @@ public class ClientMessageService extends MessageService {
             Message message = messageSender.sendMessage(client.getTelegramId(),
                     clientMessageSource.getMessage("message.WayCommunicationMessage", client.getFirstName()),
                     clientInlineKeyboardMarkupSource.getWayCommunicationKeyboard());
+
+            updateLastBotMessage(client.getUser(), message);
+        } catch (TelegramApiException ex) {
+            LOGGER.error("Unable to sendConfirmationForConsultation to user: " + client.getTelegramId() + ", reason: " + ex.getLocalizedMessage());
+        }
+    }
+
+    @SneakyThrows
+    public void sendLinkToBrif(ClientBotContext clientBotContext) {
+        Client client = clientBotContext.getClient();
+
+        if (client == null) throw new ClientNotFoundException();
+
+        if (checkEditableMessage(clientBotContext)) {
+            messageSender.deleteBotLastMessage(client.getUser());
+        }
+        try {
+            Message message = messageSender.sendMessage(client.getTelegramId(),
+                    clientMessageSource.getMessage("message.linkToBrif", client.getFirstName()),
+                    null);
 
             updateLastBotMessage(client.getUser(), message);
         } catch (TelegramApiException ex) {

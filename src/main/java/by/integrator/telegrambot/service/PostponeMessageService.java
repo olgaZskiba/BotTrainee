@@ -31,7 +31,6 @@ public class PostponeMessageService {
 
     @Transactional
     public List<PostponeMessage> getAllWithoutLast() {
-        System.out.println(getAll());
         return getAll().stream().filter(m -> !m.getIsLast()).collect(Collectors.toList());
     }
 

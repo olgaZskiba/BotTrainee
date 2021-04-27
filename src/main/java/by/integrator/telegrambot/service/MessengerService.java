@@ -65,10 +65,13 @@ public class MessengerService {
     public String getClientMessengerList(Client client) {
         List<Messenger> messengerList = getAllByClient(client);
         String list = "";
-        for (Messenger messenger : messengerList) {
-            list = list.concat(messenger.getName());
-            list = list.concat(", ");
+        if (!messengerList.isEmpty()) {
+            for (Messenger messenger : messengerList) {
+                list = list.concat(messenger.getName());
+                list = list.concat(", ");
+            }
+            return list.substring(0, list.length() - 2);
         }
-        return list.substring(0, list.length() - 2);
+        return "не заполнено";
     }
 }
